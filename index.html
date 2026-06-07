@@ -44,8 +44,19 @@
             </div>
           </section>
 
+          <section class="flow-card">
+            <h2>遊戲流程</h2>
+            <ol>
+              <li><strong>定位</strong><span>探頭對準治療路徑</span></li>
+              <li><strong>發射</strong><span>超音波能量聚焦成光點</span></li>
+              <li><strong>穿越</strong><span>避開正常組織</span></li>
+              <li><strong>命中</strong><span>只碰腫瘤與能量幣</span></li>
+            </ol>
+          </section>
+
           <div class="asset-strip" aria-label="HIFU Dash art assets">
             <figure class="asset-card safe"><img src="assets/focus-orb.svg" alt="超音波焦點" /><figcaption>超音波焦點</figcaption></figure>
+            <figure class="asset-card safe"><img src="assets/transducer.svg" alt="超音波探頭" /><figcaption>超音波探頭</figcaption></figure>
             <figure class="asset-card danger"><img src="assets/vessel.svg" alt="血管" /><figcaption>血管</figcaption></figure>
             <figure class="asset-card danger"><img src="assets/nerve.svg" alt="神經" /><figcaption>神經</figcaption></figure>
             <figure class="asset-card danger"><img src="assets/organ.svg" alt="器官" /><figcaption>器官</figcaption></figure>
@@ -75,9 +86,9 @@
           <canvas id="game" width="1280" height="720" aria-label="HIFU Dash game canvas"></canvas>
           <div id="overlay" class="overlay menu">
             <h2>HIFU DASH</h2>
-            <p>可以碰：腫瘤與金色能量幣。不能碰：血管、神經、器官、胸腔、骨頭、腸胃。</p>
-            <button class="play-button small">PLAY</button>
-            <small>Space / Click / Tap 跳躍，P 暫停</small>
+            <p>先發射超音波，形成藍色焦點；接著穿越正常組織，只命中腫瘤。</p>
+            <button class="play-button small">發射超音波</button>
+            <small>發射後進入 Dash。Space / Click / Tap 跳躍，P 暫停</small>
           </div>
         </section>
       </section>

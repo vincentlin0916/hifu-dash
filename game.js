@@ -18,6 +18,7 @@ const ui = {
 
 const sprites = loadSprites({
   focus: "assets/focus-orb.svg",
+  transducer: "assets/transducer.svg",
   vessel: "assets/vessel.svg",
   nerve: "assets/nerve.svg",
   organ: "assets/organ.svg",
@@ -43,6 +44,7 @@ let state = "menu";
 let attempt = 1;
 let speed = 6.2;
 let frame = 0;
+let launchFrame = 0;
 let energy = 100;
 let safety = 100;
 let hits = 0;
@@ -82,6 +84,28 @@ function resetGame() {
   startButton.textContent = "RETRY";
   ui.attempt.textContent = `ATTEMPT ${attempt}`;
   seedOpeningPattern();
+  updateUi();
+}
+
+function startLaunch() {
+  state = "launching";
+  launchFrame = 0;
+  frame = 0;
+  energy = 100;
+  safety = 100;
+  hits = 0;
+  coins = 0;
+  distance = 0;
+  focus.y = 430;
+  focus.vy = 0;
+  focus.trail = [];
+  obstacles = [];
+  tumors = [];
+  pickups = [];
+  particles = [];
+  overlay.className = "overlay hidden";
+  startButton.textContent = "RETRY";
+  ui.attempt.textContent = `ATTEMPT ${attempt}`;
   updateUi();
 }
 
@@ -143,9 +167,11 @@ function makeTumor(x, y) {
 function jump() {
   if (state === "menu" || state === "dead" || state === "complete") {
     attempt = state === "menu" ? 1 : attempt + 1;
-    resetGame();
+    startLaunch();
     return;
   }
+
+  if (state === "launching") return;
 
   if (state === "paused") {
     resumeGame();
@@ -226,6 +252,11 @@ function damagePlayer(amount, color) {
 }
 
 function update() {
+  if (state === "launching") {
+    updateLaunch();
+    return;
+  }
+
   if (state !== "playing") return;
 
   frame += 1;
@@ -310,6 +341,30 @@ function update() {
   updateUi();
 }
 
+function updateLaunch() {
+  launchFrame += 1;
+  frame += 1;
+  const charge = Math.min(1, launchFrame / 110);
+  energy = Math.round(45 + charge * 55);
+  focus.x = 178 + easeOutCubic(charge) * 26;
+  focus.y = 430 - Math.sin(charge * Math.PI) * 44;
+
+  if (launchFrame % 8 === 0) {
+    addBurst(210 + charge * 190, focus.y, "#5afcff", 4, 3);
+  }
+
+  if (launchFrame >= 130) {
+    focus.x = 178;
+    resetGame();
+  } else {
+    updateUi();
+  }
+}
+
+function easeOutCubic(value) {
+  return 1 - Math.pow(1 - value, 3);
+}
+
 function updateUi() {
   const progress = Math.min(100, Math.round((distance / levelLength) * 100));
   ui.energy.textContent = `${Math.round(energy)}%`;
@@ -361,6 +416,59 @@ function drawBackground() {
     ctx.lineTo(x, canvas.height);
     ctx.stroke();
   }
+}
+
+function drawLaunchScene() {
+  drawBackground();
+  drawTissueFloor();
+
+  const charge = Math.min(1, launchFrame / 110);
+  const beamEnd = 280 + charge * 520;
+  const beamY = 390 + Math.sin(launchFrame * 0.08) * 10;
+
+  drawSprite("transducer", 38, 278, 270, 186);
+
+  for (let i = 0; i < 5; i += 1) {
+    ctx.strokeStyle = `rgba(90, 252, 255, ${0.08 + i * 0.08})`;
+    ctx.lineWidth = 18 - i * 3;
+    ctx.beginPath();
+    ctx.moveTo(242, beamY);
+    ctx.quadraticCurveTo(430, beamY - 58 + i * 16, beamEnd, focus.y);
+    ctx.stroke();
+  }
+
+  const targetX = 870;
+  const targetY = 360;
+  ctx.strokeStyle = "rgba(143, 255, 41, 0.8)";
+  ctx.lineWidth = 3;
+  ctx.setLineDash([10, 10]);
+  ctx.beginPath();
+  ctx.arc(targetX, targetY, 64 + Math.sin(launchFrame * 0.1) * 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  drawSprite("tumor", targetX - 62, targetY - 58, 124, 116);
+
+  drawSprite("focus", beamEnd - 58, focus.y - 58, 116, 116);
+
+  ctx.fillStyle = "rgba(242, 253, 255, 0.94)";
+  ctx.font = "900 34px sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("超音波發射中", 42, 82);
+
+  ctx.font = "900 18px sans-serif";
+  ctx.fillStyle = "rgba(201, 251, 255, 0.92)";
+  ctx.fillText("探頭聚焦能量，形成可控制的藍色焦點。下一步才進入 HIFU Dash。", 42, 116);
+
+  ctx.fillStyle = "rgba(90, 252, 255, 0.18)";
+  ctx.fillRect(42, 142, 420, 18);
+  ctx.fillStyle = "rgba(143, 255, 41, 0.9)";
+  ctx.fillRect(42, 142, 420 * charge, 18);
+  ctx.strokeStyle = "rgba(90, 252, 255, 0.85)";
+  ctx.strokeRect(42, 142, 420, 18);
+
+  ctx.fillStyle = "rgba(143, 255, 41, 0.96)";
+  ctx.font = "900 16px sans-serif";
+  ctx.fillText("1. 定位  2. 發射  3. 穿越  4. 命中腫瘤", 42, 190);
 }
 
 function drawTissueFloor() {
@@ -622,6 +730,11 @@ function drawDecorations() {
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (state === "launching") {
+    drawLaunchScene();
+    return;
+  }
+
   drawBackground();
   drawTissueFloor();
   drawDecorations();
@@ -640,7 +753,7 @@ function loop() {
 
 startButton.addEventListener("click", () => {
   attempt = state === "menu" ? 1 : attempt + 1;
-  resetGame();
+  startLaunch();
 });
 overlayPlay.addEventListener("click", jump);
 pauseButton.addEventListener("click", togglePause);

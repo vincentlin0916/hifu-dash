@@ -241,7 +241,8 @@ h1 {
   color: #ffafa7;
 }
 
-.rules-card {
+.rules-card,
+.flow-card {
   margin-top: 14px;
   padding: 14px;
   border: 1px solid rgba(90, 252, 255, 0.28);
@@ -249,10 +250,58 @@ h1 {
   background: rgba(255, 255, 255, 0.055);
 }
 
-.rules-card h2 {
+.rules-card h2,
+.flow-card h2 {
   margin: 0 0 10px;
   font-size: 1.05rem;
   letter-spacing: 0.08em;
+}
+
+.flow-card ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: phase;
+}
+
+.flow-card li {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  column-gap: 10px;
+  align-items: center;
+  padding: 9px;
+  border-radius: 13px;
+  background: rgba(90, 252, 255, 0.07);
+  counter-increment: phase;
+}
+
+.flow-card li::before {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  color: #042027;
+  background: linear-gradient(#79ffff, #31d7e8);
+  content: counter(phase);
+  font-weight: 1000;
+}
+
+.flow-card strong,
+.flow-card span {
+  display: block;
+}
+
+.flow-card strong {
+  color: var(--cyan);
+  font-size: 0.92rem;
+}
+
+.flow-card span {
+  color: #c9fbff;
+  font-size: 0.78rem;
 }
 
 .rule {

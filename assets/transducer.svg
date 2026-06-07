@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220">
+  <defs>
+    <linearGradient id="metal" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#eaffff"/>
+      <stop offset=".22" stop-color="#6df2ff"/>
+      <stop offset=".5" stop-color="#177c9b"/>
+      <stop offset=".78" stop-color="#0b3045"/>
+      <stop offset="1" stop-color="#02131f"/>
+    </linearGradient>
+    <linearGradient id="gel" x1="0" x2="1">
+      <stop offset="0" stop-color="#a8ffff" stop-opacity=".15"/>
+      <stop offset=".5" stop-color="#79ffff" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#a8ffff" stop-opacity=".15"/>
+    </linearGradient>
+    <filter id="glow">
+      <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#66ffff" flood-opacity=".7"/>
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#000" flood-opacity=".48"/>
+    </filter>
+  </defs>
+  <g filter="url(#glow)">
+    <path d="M41 154c10-66 44-104 100-118h83c30 0 54 24 54 54v18c0 30-24 54-54 54h-83c-43 0-77 8-100-8Z" fill="url(#metal)" stroke="#dfffff" stroke-width="6"/>
+    <path d="M56 148c15-48 44-76 88-86h76c15 0 27 12 27 27v24c0 15-12 27-27 27h-76c-37 0-67 4-88 8Z" fill="#062234" opacity=".56"/>
+    <path d="M211 45h52c17 0 31 14 31 31v44c0 17-14 31-31 31h-52c21-32 22-74 0-106Z" fill="#052033" stroke="#7fffff" stroke-width="5"/>
+    <path d="M30 159c38-20 76-29 119-28" stroke="url(#gel)" stroke-width="18" stroke-linecap="round"/>
+    <path d="M89 93c35-33 79-43 129-27" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity=".42"/>
+    <circle cx="259" cy="97" r="18" fill="#80ffff" opacity=".65"/>
+  </g>
+</svg>
