@@ -1,20 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 310 210">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 240">
   <defs>
     <linearGradient id="gut" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#ffe28b"/>
-      <stop offset=".32" stop-color="#ff9c5b"/>
-      <stop offset=".66" stop-color="#df4b49"/>
-      <stop offset="1" stop-color="#6e1732"/>
+      <stop offset="0" stop-color="#ffe0a1"/>
+      <stop offset=".2" stop-color="#ff9b65"/>
+      <stop offset=".46" stop-color="#e9514e"/>
+      <stop offset=".72" stop-color="#9b223a"/>
+      <stop offset="1" stop-color="#3a0c20"/>
     </linearGradient>
     <filter id="gutGlow">
       <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#ffad5f" flood-opacity=".72"/>
-      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".42"/>
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#000" flood-opacity=".45"/>
     </filter>
   </defs>
-  <g filter="url(#gutGlow)" fill="none" stroke-linecap="round">
-    <path d="M35 72c29-55 111-40 114 14 3 51-88 26-86 72 2 50 118 48 122-4 4-54-79-33-75-81 5-59 121-64 165-7" stroke="#561020" stroke-width="54"/>
-    <path d="M35 72c29-55 111-40 114 14 3 51-88 26-86 72 2 50 118 48 122-4 4-54-79-33-75-81 5-59 121-64 165-7" stroke="url(#gut)" stroke-width="38"/>
-    <path d="M49 67c34-38 85-27 88 18 4 55-91 30-86 76" stroke="#ffd6a4" stroke-width="6" opacity=".55"/>
-    <path d="M120 161c34 18 56 0 60-23 8-45-63-33-58-72 4-28 65-46 128-7" stroke="#ffe2ad" stroke-width="6" opacity=".48"/>
+  <g filter="url(#gutGlow)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M38 82c33-67 126-50 131 15 5 63-102 31-100 86 3 58 132 57 138-5 6-66-91-37-86-96 6-73 143-77 190-7" stroke="#3b0717" stroke-width="60"/>
+    <path d="M38 82c33-67 126-50 131 15 5 63-102 31-100 86 3 58 132 57 138-5 6-66-91-37-86-96 6-73 143-77 190-7" stroke="url(#gut)" stroke-width="42"/>
+    <path d="M55 75c39-48 95-33 99 20 5 65-103 37-98 90" stroke="#ffd9a5" stroke-width="7" opacity=".58"/>
+    <path d="M134 187c39 19 63-1 68-30 9-53-75-38-68-87 5-36 77-55 151-10" stroke="#ffe4b8" stroke-width="7" opacity=".5"/>
+    <path d="M64 109c28 5 49 16 70 34M92 202c32-12 67-11 99 2M153 94c42 7 75 21 105 50" stroke="#5c0d22" stroke-width="5" opacity=".42"/>
+    <path d="M91 55c20-4 41-1 55 12M226 47c31 3 55 14 75 35" stroke="#fff2c8" stroke-width="5" opacity=".38"/>
   </g>
 </svg>

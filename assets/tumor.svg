@@ -1,22 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 230">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 250">
   <defs>
-    <radialGradient id="tumor" cx="38%" cy="32%" r="70%">
-      <stop offset="0" stop-color="#fff8b9"/>
-      <stop offset=".22" stop-color="#f7d84d"/>
-      <stop offset=".5" stop-color="#d76b35"/>
-      <stop offset=".76" stop-color="#8f1d2f"/>
-      <stop offset="1" stop-color="#36101b"/>
+    <radialGradient id="tumor" cx="34%" cy="28%" r="75%">
+      <stop offset="0" stop-color="#fff0a8"/>
+      <stop offset=".2" stop-color="#ffbf51"/>
+      <stop offset=".42" stop-color="#e66a3d"/>
+      <stop offset=".68" stop-color="#9b2035"/>
+      <stop offset="1" stop-color="#320914"/>
     </radialGradient>
     <filter id="tumorGlow">
-      <feDropShadow dx="0" dy="0" stdDeviation="11" flood-color="#ff7b45" flood-opacity=".7"/>
-      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".45"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="11" flood-color="#ff7b45" flood-opacity=".75"/>
+      <feDropShadow dx="0" dy="12" stdDeviation="11" flood-color="#000" flood-opacity=".48"/>
     </filter>
   </defs>
   <g filter="url(#tumorGlow)">
-    <path d="M126 12c15 21 26 28 51 21 1 26 10 38 35 45-15 21-16 36 0 57-24 8-33 20-33 46-25-7-39-1-53 21-15-22-29-28-54-21 0-26-9-38-34-46 15-20 15-36 0-57 25-7 34-19 34-45 25 7 39 0 54-21Z" fill="url(#tumor)" stroke="#ffef9b" stroke-width="6"/>
-    <circle cx="94" cy="82" r="15" fill="#fff09a" opacity=".7"/>
-    <circle cx="145" cy="105" r="12" fill="#fb5c48" opacity=".62"/>
-    <circle cx="118" cy="146" r="18" fill="#7e172b" opacity=".42"/>
-    <path d="M67 122c30-22 78-31 121 4" fill="none" stroke="#ffd47a" stroke-width="6" stroke-linecap="round" opacity=".42"/>
+    <path d="M136 14c18 25 32 33 61 24 2 31 13 46 43 54-19 25-20 43 0 68-30 10-41 24-41 55-30-9-47-2-63 25-18-27-35-34-65-25 0-31-11-45-41-55 19-25 19-43 0-68 30-8 41-23 41-54 30 9 47 1 65-24Z" fill="url(#tumor)" stroke="#ffef9b" stroke-width="6"/>
+    <circle cx="94" cy="81" r="16" fill="#fff2a8" opacity=".74"/>
+    <circle cx="148" cy="107" r="13" fill="#ff7553" opacity=".66"/>
+    <circle cx="121" cy="159" r="22" fill="#721223" opacity=".42"/>
+    <circle cx="172" cy="164" r="12" fill="#ef8a45" opacity=".45"/>
+    <path d="M67 126c35-27 90-37 137 4" fill="none" stroke="#ffd884" stroke-width="7" stroke-linecap="round" opacity=".44"/>
+    <path d="M86 179c38 19 82 17 116-8" fill="none" stroke="#3d0915" stroke-width="5" stroke-linecap="round" opacity=".38"/>
+    <path d="M93 52c20-11 44-12 68-1" fill="none" stroke="#fff6bd" stroke-width="5" stroke-linecap="round" opacity=".45"/>
   </g>
 </svg>

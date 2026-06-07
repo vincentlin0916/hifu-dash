@@ -1,21 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 230">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 260">
   <defs>
-    <radialGradient id="lung" cx="40%" cy="34%" r="66%">
-      <stop offset="0" stop-color="#ffd3dc"/>
-      <stop offset=".36" stop-color="#ff7f9d"/>
-      <stop offset=".72" stop-color="#9b244d"/>
-      <stop offset="1" stop-color="#331122"/>
+    <radialGradient id="lungL" cx="38%" cy="28%" r="78%">
+      <stop offset="0" stop-color="#ffe1e7"/>
+      <stop offset=".24" stop-color="#ff9ab0"/>
+      <stop offset=".52" stop-color="#c94972"/>
+      <stop offset=".78" stop-color="#641d3f"/>
+      <stop offset="1" stop-color="#210b19"/>
+    </radialGradient>
+    <radialGradient id="lungR" cx="58%" cy="28%" r="78%">
+      <stop offset="0" stop-color="#ffd7df"/>
+      <stop offset=".28" stop-color="#ff8ca7"/>
+      <stop offset=".58" stop-color="#b73562"/>
+      <stop offset=".85" stop-color="#511831"/>
+      <stop offset="1" stop-color="#1e0915"/>
     </radialGradient>
     <filter id="chestGlow">
-      <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#ff8aa8" flood-opacity=".62"/>
-      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity=".4"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#ff8aa8" flood-opacity=".65"/>
+      <feDropShadow dx="0" dy="13" stdDeviation="11" flood-color="#000" flood-opacity=".45"/>
     </filter>
   </defs>
   <g filter="url(#chestGlow)">
-    <path d="M118 34c-42-23-82 7-88 55-7 56 20 91 70 105 23-41 24-103 18-160Z" fill="url(#lung)" stroke="#ffd6df" stroke-width="6"/>
-    <path d="M142 34c42-23 82 7 88 55 7 56-20 91-70 105-23-41-24-103-18-160Z" fill="url(#lung)" stroke="#ffd6df" stroke-width="6"/>
-    <path d="M130 22v172" stroke="#ffcad6" stroke-width="9" stroke-linecap="round"/>
-    <path d="M130 78c-23 11-39 28-50 52M130 78c23 11 39 28 50 52" fill="none" stroke="#ffe8ee" stroke-width="5" stroke-linecap="round" opacity=".72"/>
-    <path d="M66 83c15-19 34-25 52-22M194 83c-15-19-34-25-52-22" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".45"/>
+    <path d="M139 42c-48-32-96 2-104 61-9 68 21 111 80 130 30-51 31-124 24-191Z" fill="url(#lungL)" stroke="#ffdce5" stroke-width="6"/>
+    <path d="M161 42c48-32 96 2 104 61 9 68-21 111-80 130-30-51-31-124-24-191Z" fill="url(#lungR)" stroke="#ffdce5" stroke-width="6"/>
+    <path d="M150 25v198" stroke="#ffe3ea" stroke-width="10" stroke-linecap="round"/>
+    <path d="M150 87c-32 16-55 41-70 78M150 87c32 16 55 41 70 78" fill="none" stroke="#fff0f4" stroke-width="6" stroke-linecap="round" opacity=".72"/>
+    <path d="M74 88c20-25 44-34 69-31M226 88c-20-25-44-34-69-31" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
+    <path d="M64 132c19-10 39-9 61 5M236 132c-19-10-39-9-61 5" fill="none" stroke="#5b1737" stroke-width="5" stroke-linecap="round" opacity=".52"/>
+    <path d="M87 182c19 10 32 11 51 1M213 182c-19 10-32 11-51 1" fill="none" stroke="#ffbac8" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </g>
 </svg>

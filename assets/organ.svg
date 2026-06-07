@@ -1,21 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 240">
   <defs>
-    <radialGradient id="organ" cx="45%" cy="38%" r="68%">
-      <stop offset="0" stop-color="#f5ff9a"/>
-      <stop offset=".34" stop-color="#a8ff39"/>
-      <stop offset=".7" stop-color="#4caf20"/>
-      <stop offset="1" stop-color="#12330e"/>
+    <radialGradient id="organ" cx="38%" cy="30%" r="72%">
+      <stop offset="0" stop-color="#f7ffb0"/>
+      <stop offset=".24" stop-color="#c7ff55"/>
+      <stop offset=".52" stop-color="#72c933"/>
+      <stop offset=".78" stop-color="#2f6b20"/>
+      <stop offset="1" stop-color="#0d2410"/>
     </radialGradient>
     <filter id="soft">
-      <feDropShadow dx="0" dy="0" stdDeviation="11" flood-color="#9cff33" flood-opacity=".65"/>
-      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".38"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#9cff33" flood-opacity=".68"/>
+      <feDropShadow dx="0" dy="11" stdDeviation="10" flood-color="#000" flood-opacity=".42"/>
     </filter>
   </defs>
   <g filter="url(#soft)">
-    <path d="M119 15c21 23 35 24 64 16-3 30 6 43 32 60-29 13-35 27-28 57-30-5-45 4-63 30-17-27-31-36-62-31 7-31 1-44-28-57 27-17 35-29 31-59 29 9 43 6 54-16Z" fill="url(#organ)" stroke="#efffb0" stroke-width="6"/>
-    <circle cx="86" cy="83" r="16" fill="#eaff81" opacity=".7"/>
-    <circle cx="142" cy="64" r="11" fill="#fff6a8" opacity=".7"/>
-    <circle cx="145" cy="134" r="19" fill="#62c82b" opacity=".45"/>
-    <path d="M68 116c38-28 75-31 111-10" fill="none" stroke="#f7ffd0" stroke-width="6" stroke-linecap="round" opacity=".44"/>
+    <path d="M129 16c23 28 41 30 76 19-5 37 7 54 39 74-36 16-45 34-36 72-37-7-56 5-78 37-21-33-39-44-76-37 9-38 1-56-35-72 33-20 43-37 38-74 35 11 53 8 72-19Z" fill="url(#organ)" stroke="#efffb0" stroke-width="6"/>
+    <circle cx="84" cy="86" r="17" fill="#eaff81" opacity=".7"/>
+    <circle cx="148" cy="67" r="12" fill="#fff6a8" opacity=".7"/>
+    <circle cx="155" cy="145" r="22" fill="#4e9f24" opacity=".45"/>
+    <path d="M66 122c45-34 92-37 134-12" fill="none" stroke="#f7ffd0" stroke-width="7" stroke-linecap="round" opacity=".45"/>
+    <path d="M77 161c39 21 81 20 118-2" fill="none" stroke="#1f4f17" stroke-width="5" stroke-linecap="round" opacity=".42"/>
+    <path d="M103 52c27-12 55-11 84 4" fill="none" stroke="#fffcc7" stroke-width="5" stroke-linecap="round" opacity=".4"/>
   </g>
 </svg>
