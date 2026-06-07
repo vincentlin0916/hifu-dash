@@ -30,7 +30,7 @@ const sprites = loadSprites({
   poster: "assets/level-poster.svg",
 });
 
-const levelLength = 1500;
+const levelLength = 1900;
 const groundY = 602;
 const focus = {
   x: 178,
@@ -153,17 +153,17 @@ function releaseUltrasound() {
 
 function seedOpeningPattern() {
   obstacles.push(makeObstacle("vessel", 760, 505, -0.12));
-  obstacles.push(makeObstacle("nerve", 1080, 150, 0));
-  obstacles.push(makeObstacle("bone", 1580, 520, 0.02));
-  obstacles.push(makeObstacle("chest", 1970, 255, 0));
-  obstacles.push(makeObstacle("gut", 2300, 468, -0.06));
-  tumors.push(makeTumor(1340, 456));
-  tumors.push(makeTumor(2600, 330));
-  painSpots.push(makePainSpot(1665, 486));
-  painSpots.push(makePainSpot(2140, 392));
-  painSpots.push(makePainSpot(2920, 500));
+  obstacles.push(makeObstacle("nerve", 1220, 150, 0));
+  obstacles.push(makeObstacle("bone", 1780, 520, 0.02));
+  obstacles.push(makeObstacle("chest", 2380, 255, 0));
+  obstacles.push(makeObstacle("gut", 2920, 468, -0.06));
+  tumors.push(makeTumor(1460, 456));
+  tumors.push(makeTumor(3280, 330));
+  painSpots.push(makePainSpot(1900, 486, 98, 34));
+  painSpots.push(makePainSpot(2560, 392, 112, 36));
+  painSpots.push(makePainSpot(3560, 500, 124, 38));
   pickups.push({ x: 620, y: 350, r: 14, taken: false });
-  pickups.push({ x: 1840, y: 210, r: 14, taken: false });
+  pickups.push({ x: 2180, y: 210, r: 14, taken: false });
 }
 
 function loadSprites(paths) {
@@ -209,11 +209,13 @@ function makeTumor(x, y) {
   };
 }
 
-function makePainSpot(x, y) {
+function makePainSpot(x, y, rx = 108, ry = 36) {
   return {
     x,
     y,
-    r: 34,
+    rx,
+    ry,
+    r: Math.max(rx, ry),
     progress: 0,
     pulse: Math.random() * Math.PI,
     treated: false,
@@ -279,7 +281,7 @@ function spawnTumor() {
 }
 
 function spawnPainSpot() {
-  painSpots.push(makePainSpot(canvas.width + 150, 392 + Math.random() * 120));
+  painSpots.push(makePainSpot(canvas.width + 220, 392 + Math.random() * 120, 96 + Math.random() * 42, 34 + Math.random() * 8));
 }
 
 function spawnPickup() {
@@ -355,10 +357,10 @@ function update() {
   focus.trail.unshift({ x: focus.x, y: focus.y, life: 1 });
   focus.trail = focus.trail.slice(0, 18).map((dot) => ({ ...dot, life: dot.life - 0.045 }));
 
-  if (frame % 72 === 0) spawnObstacle();
-  if (frame % 132 === 0) spawnTumor();
-  if (frame % 118 === 0) spawnPickup();
-  if (frame % 210 === 0) spawnPainSpot();
+  if (frame % 104 === 0) spawnObstacle();
+  if (frame % 178 === 0) spawnTumor();
+  if (frame % 146 === 0) spawnPickup();
+  if (frame % 280 === 0) spawnPainSpot();
 
   obstacles.forEach((obstacle) => {
     obstacle.x -= speed;
@@ -393,15 +395,17 @@ function update() {
     spot.pulse += 0.11;
     if (spot.treated) return;
 
-    const inTherapyZone = Math.hypot(focus.x - spot.x, focus.y - spot.y) < focus.radius + spot.r;
+    const dx = (focus.x - spot.x) / (spot.rx + focus.radius);
+    const dy = (focus.y - spot.y) / (spot.ry + focus.radius);
+    const inTherapyZone = dx * dx + dy * dy < 1;
     if (inTherapyZone) {
       treatingPain = true;
-      spot.progress = Math.min(100, spot.progress + 1.55 + chargeLevel * 0.4);
-      heat = Math.min(120, heat + 1.15 + chargeLevel * 0.35);
-      energy = Math.max(0, energy - 0.08);
+      spot.progress = Math.min(100, spot.progress + 2.1 + chargeLevel * 0.45);
+      heat = Math.min(120, heat + 0.78 + chargeLevel * 0.22);
+      energy = Math.max(0, energy - 0.055);
       if (frame % 7 === 0) addBurst(spot.x, spot.y, "#ff9c5b", 5, 4);
     } else {
-      spot.progress = Math.max(0, spot.progress - 0.22);
+      spot.progress = Math.max(0, spot.progress - 0.08);
     }
 
     if (spot.progress >= 100) {
@@ -415,12 +419,12 @@ function update() {
   });
 
   if (!treatingPain) {
-    heat = Math.max(0, heat - 0.55);
+    heat = Math.max(0, heat - 0.78);
   }
 
-  if (heat >= 100 && frame % 22 === 0) {
-    safety = Math.max(0, safety - 4);
-    heat = Math.max(74, heat - 16);
+  if (heat >= 104 && frame % 28 === 0) {
+    safety = Math.max(0, safety - 3);
+    heat = Math.max(76, heat - 18);
     addBurst(focus.x, focus.y, "#ff4b45", 16, 7);
   }
 
@@ -879,36 +883,44 @@ function drawObstacle(obstacle) {
 function drawPainSpot(spot) {
   if (spot.treated) return;
   const pulse = 1 + Math.sin(spot.pulse) * 0.12;
-  const radius = spot.r * pulse;
+  const rx = spot.rx * pulse;
+  const ry = spot.ry * pulse;
 
-  const glow = ctx.createRadialGradient(spot.x, spot.y, 4, spot.x, spot.y, radius * 2.5);
+  const glow = ctx.createRadialGradient(spot.x, spot.y, 4, spot.x, spot.y, rx * 1.45);
   glow.addColorStop(0, "rgba(255, 238, 122, 0.9)");
   glow.addColorStop(0.35, "rgba(255, 120, 68, 0.42)");
   glow.addColorStop(1, "rgba(255, 75, 69, 0)");
   ctx.fillStyle = glow;
   ctx.beginPath();
-  ctx.arc(spot.x, spot.y, radius * 2.4, 0, Math.PI * 2);
+  ctx.ellipse(spot.x, spot.y, rx * 1.7, ry * 2.2, -0.1, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "rgba(255, 112, 72, 0.9)";
   ctx.strokeStyle = "#fff1a8";
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(spot.x, spot.y, radius, 0, Math.PI * 2);
+  ctx.ellipse(spot.x, spot.y, rx, ry, -0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
+  ctx.strokeStyle = "rgba(255, 241, 168, 0.55)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(spot.x - rx * 0.72, spot.y);
+  ctx.bezierCurveTo(spot.x - rx * 0.22, spot.y - ry * 0.62, spot.x + rx * 0.22, spot.y + ry * 0.62, spot.x + rx * 0.72, spot.y);
+  ctx.stroke();
+
   ctx.fillStyle = "rgba(3, 16, 22, 0.72)";
-  ctx.fillRect(spot.x - 42, spot.y + radius + 16, 84, 10);
+  ctx.fillRect(spot.x - 62, spot.y + ry + 18, 124, 12);
   ctx.fillStyle = heat > 82 ? "#ff4b45" : "#8fff29";
-  ctx.fillRect(spot.x - 42, spot.y + radius + 16, 84 * (spot.progress / 100), 10);
+  ctx.fillRect(spot.x - 62, spot.y + ry + 18, 124 * (spot.progress / 100), 12);
   ctx.strokeStyle = "rgba(242, 253, 255, 0.72)";
-  ctx.strokeRect(spot.x - 42, spot.y + radius + 16, 84, 10);
+  ctx.strokeRect(spot.x - 62, spot.y + ry + 18, 124, 12);
 
   ctx.fillStyle = "#f2fdff";
   ctx.font = "900 14px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("Pain Spot", spot.x, spot.y - radius - 14);
+  ctx.fillText("Pain Relief Zone", spot.x, spot.y - ry - 16);
 }
 
 function drawTumor(tumor) {
