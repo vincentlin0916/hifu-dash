@@ -29,3 +29,9 @@ python3 -m http.server 8000
 ## 核心訊息
 
 HIFU 的價值不只是輸出能量，而是把能量精準送到腫瘤，同時避開正常組織。
+
+## 專案規劃
+
+完整 MVP、Unity 架構、第二階段關卡編輯器與第三階段 AI 自動生成關卡規劃請見：
+
+[PROJECT_PLAN.md](PROJECT_PLAN.md)
