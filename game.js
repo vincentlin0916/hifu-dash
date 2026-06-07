@@ -154,14 +154,13 @@ function releaseUltrasound() {
 function seedOpeningPattern() {
   obstacles.push(makeObstacle("vessel", 760, 505, -0.12));
   obstacles.push(makeObstacle("nerve", 1220, 150, 0));
-  obstacles.push(makeObstacle("bone", 1780, 520, 0.02));
+  const firstBone = makeObstacle("bone", 1780, 520, 0.02);
+  obstacles.push(firstBone);
   obstacles.push(makeObstacle("chest", 2380, 255, 0));
   obstacles.push(makeObstacle("gut", 2920, 468, -0.06));
   tumors.push(makeTumor(1460, 456));
   tumors.push(makeTumor(3280, 330));
-  painSpots.push(makePainSpot(1900, 486, 98, 34));
-  painSpots.push(makePainSpot(2560, 392, 112, 36));
-  painSpots.push(makePainSpot(3560, 500, 124, 38));
+  painSpots.push(makePainSpot(firstBone, 0.48, 0.42, 108, 24));
   pickups.push({ x: 620, y: 350, r: 14, taken: false });
   pickups.push({ x: 2180, y: 210, r: 14, taken: false });
 }
@@ -209,10 +208,13 @@ function makeTumor(x, y) {
   };
 }
 
-function makePainSpot(x, y, rx = 108, ry = 36) {
+function makePainSpot(bone, offsetXRatio = 0.5, offsetYRatio = 0.42, rx = 108, ry = 24) {
   return {
-    x,
-    y,
+    bone,
+    offsetXRatio,
+    offsetYRatio,
+    x: bone.x + bone.w * offsetXRatio,
+    y: bone.y + bone.h * offsetYRatio,
     rx,
     ry,
     r: Math.max(rx, ry),
@@ -273,7 +275,11 @@ function spawnObstacle() {
   if (type.lane === "mid") y = midLane;
   if (type.lane === "any") y = Math.random() > 0.44 ? lowLane : topLane + 120;
   const angle = type.kind === "vessel" ? (Math.random() - 0.5) * 0.65 : 0;
-  obstacles.push(makeObstacle(type.kind, canvas.width + 100, y, angle));
+  const obstacle = makeObstacle(type.kind, canvas.width + 100, y, angle);
+  obstacles.push(obstacle);
+  if (type.kind === "bone" && Math.random() > 0.2) {
+    painSpots.push(makePainSpot(obstacle, 0.48 + (Math.random() - 0.5) * 0.18, 0.38 + Math.random() * 0.18, 98 + Math.random() * 34, 22 + Math.random() * 8));
+  }
 }
 
 function spawnTumor() {
@@ -281,7 +287,9 @@ function spawnTumor() {
 }
 
 function spawnPainSpot() {
-  painSpots.push(makePainSpot(canvas.width + 220, 392 + Math.random() * 120, 96 + Math.random() * 42, 34 + Math.random() * 8));
+  const bone = makeObstacle("bone", canvas.width + 240, groundY - 92 - Math.random() * 58, (Math.random() - 0.5) * 0.08);
+  obstacles.push(bone);
+  painSpots.push(makePainSpot(bone, 0.5, 0.42, 116 + Math.random() * 28, 24 + Math.random() * 6));
 }
 
 function spawnPickup() {
@@ -391,9 +399,10 @@ function update() {
 
   let treatingPain = false;
   painSpots.forEach((spot) => {
-    spot.x -= speed;
+    spot.x = spot.bone.x + spot.bone.w * spot.offsetXRatio;
+    spot.y = spot.bone.y + spot.bone.h * spot.offsetYRatio;
     spot.pulse += 0.11;
-    if (spot.treated) return;
+    if (spot.treated || spot.bone.hit) return;
 
     const dx = (focus.x - spot.x) / (spot.rx + focus.radius);
     const dy = (focus.y - spot.y) / (spot.ry + focus.radius);
@@ -455,8 +464,8 @@ function update() {
   }
 
   obstacles = obstacles.filter((obstacle) => obstacle.x > -260);
-  tumors = tumors.filter((tumor) => tumor.x > -140);
-  painSpots = painSpots.filter((spot) => spot.x > -140);
+  tumors = tumors.filter((tumor) => tumor.x > -140 && !tumor.hit);
+  painSpots = painSpots.filter((spot) => spot.x > -180 && !spot.treated && obstacles.includes(spot.bone));
   pickups = pickups.filter((pickup) => pickup.x > -80 && !pickup.taken);
   particles = particles.filter((particle) => particle.life > 0);
 
@@ -885,6 +894,9 @@ function drawPainSpot(spot) {
   const pulse = 1 + Math.sin(spot.pulse) * 0.12;
   const rx = spot.rx * pulse;
   const ry = spot.ry * pulse;
+  const remainingRatio = 1 - spot.progress / 100;
+  const remainingWidth = rx * 2 * remainingRatio;
+  const remainingCenter = spot.x + rx * (spot.progress / 100);
 
   const glow = ctx.createRadialGradient(spot.x, spot.y, 4, spot.x, spot.y, rx * 1.45);
   glow.addColorStop(0, "rgba(255, 238, 122, 0.9)");
@@ -892,35 +904,43 @@ function drawPainSpot(spot) {
   glow.addColorStop(1, "rgba(255, 75, 69, 0)");
   ctx.fillStyle = glow;
   ctx.beginPath();
-  ctx.ellipse(spot.x, spot.y, rx * 1.7, ry * 2.2, -0.1, 0, Math.PI * 2);
+  ctx.ellipse(remainingCenter, spot.y, Math.max(2, remainingWidth * 0.85), ry * 2.2, -0.08, 0, Math.PI * 2);
   ctx.fill();
+
+  ctx.save();
+  ctx.globalAlpha = 0.42;
+  ctx.fillStyle = "rgba(120, 255, 255, 0.55)";
+  ctx.beginPath();
+  ctx.ellipse(spot.x - rx * 0.55 + rx * spot.progress / 100, spot.y, rx * spot.progress / 100, ry * 0.72, -0.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
   ctx.fillStyle = "rgba(255, 112, 72, 0.9)";
   ctx.strokeStyle = "#fff1a8";
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.ellipse(spot.x, spot.y, rx, ry, -0.1, 0, Math.PI * 2);
+  ctx.ellipse(remainingCenter, spot.y, Math.max(2, remainingWidth / 2), ry, -0.08, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   ctx.strokeStyle = "rgba(255, 241, 168, 0.55)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(spot.x - rx * 0.72, spot.y);
-  ctx.bezierCurveTo(spot.x - rx * 0.22, spot.y - ry * 0.62, spot.x + rx * 0.22, spot.y + ry * 0.62, spot.x + rx * 0.72, spot.y);
+  ctx.moveTo(remainingCenter - remainingWidth * 0.36, spot.y);
+  ctx.bezierCurveTo(remainingCenter - remainingWidth * 0.12, spot.y - ry * 0.62, remainingCenter + remainingWidth * 0.12, spot.y + ry * 0.62, remainingCenter + remainingWidth * 0.36, spot.y);
   ctx.stroke();
 
   ctx.fillStyle = "rgba(3, 16, 22, 0.72)";
-  ctx.fillRect(spot.x - 62, spot.y + ry + 18, 124, 12);
+  ctx.fillRect(spot.x - 68, spot.y + ry + 18, 136, 12);
   ctx.fillStyle = heat > 82 ? "#ff4b45" : "#8fff29";
-  ctx.fillRect(spot.x - 62, spot.y + ry + 18, 124 * (spot.progress / 100), 12);
+  ctx.fillRect(spot.x - 68, spot.y + ry + 18, 136 * (spot.progress / 100), 12);
   ctx.strokeStyle = "rgba(242, 253, 255, 0.72)";
-  ctx.strokeRect(spot.x - 62, spot.y + ry + 18, 124, 12);
+  ctx.strokeRect(spot.x - 68, spot.y + ry + 18, 136, 12);
 
   ctx.fillStyle = "#f2fdff";
   ctx.font = "900 14px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("Pain Relief Zone", spot.x, spot.y - ry - 16);
+  ctx.fillText("Bone Pain Zone", spot.x, spot.y - ry - 16);
 }
 
 function drawTumor(tumor) {
