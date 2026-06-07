@@ -545,6 +545,118 @@ function drawBackground() {
   }
 }
 
+function drawScannerPanel(title, subtitle, progress, accent = "#5afcff") {
+  ctx.save();
+  ctx.fillStyle = "rgba(3, 18, 26, 0.66)";
+  ctx.strokeStyle = "rgba(90, 252, 255, 0.42)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(32, 34, 520, 154, 22);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(242, 253, 255, 0.96)";
+  ctx.font = "900 32px sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(title, 58, 82);
+
+  ctx.font = "900 17px sans-serif";
+  ctx.fillStyle = "rgba(201, 251, 255, 0.9)";
+  ctx.fillText(subtitle, 58, 116);
+
+  ctx.fillStyle = "rgba(90, 252, 255, 0.16)";
+  ctx.fillRect(58, 142, 430, 18);
+  ctx.fillStyle = accent;
+  ctx.fillRect(58, 142, 430 * Math.max(0, Math.min(1, progress)), 18);
+  ctx.strokeStyle = "rgba(90, 252, 255, 0.75)";
+  ctx.strokeRect(58, 142, 430, 18);
+
+  ctx.fillStyle = "rgba(242, 253, 255, 0.86)";
+  ctx.font = "900 13px sans-serif";
+  ctx.fillText("SCAN", 58, 177);
+  ctx.fillText("LOCK", 180, 177);
+  ctx.fillText("ENERGY", 302, 177);
+  ctx.fillText("FOCUS", 430, 177);
+  ctx.restore();
+}
+
+function drawTargetLock(x, y, radius, progress, accent = "#8fff29") {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = 18;
+  ctx.setLineDash([14, 12]);
+  ctx.rotate(frame * 0.018);
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + Math.sin(frame * 0.08) * 7, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.rotate(-frame * 0.034);
+  for (let i = 0; i < 4; i += 1) {
+    ctx.rotate(Math.PI / 2);
+    ctx.beginPath();
+    ctx.moveTo(radius - 12, 0);
+    ctx.lineTo(radius + 30 + progress * 18, 0);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "rgba(242, 253, 255, 0.72)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-18, 0);
+  ctx.lineTo(18, 0);
+  ctx.moveTo(0, -18);
+  ctx.lineTo(0, 18);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawEnergyRings(x, y, radius, intensity) {
+  ctx.save();
+  for (let i = 0; i < 5; i += 1) {
+    const pulse = ((frame * 0.018 + i * 0.18) % 1);
+    ctx.strokeStyle = `rgba(90, 252, 255, ${0.38 * (1 - pulse) + intensity * 0.18})`;
+    ctx.lineWidth = 2 + intensity * 5;
+    ctx.beginPath();
+    ctx.arc(x, y, radius + pulse * 92 + i * 6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawFocusingBeam(startX, startY, endX, endY, intensity, phase = 0) {
+  ctx.save();
+  ctx.lineCap = "round";
+  for (let i = 0; i < 7; i += 1) {
+    const wave = Math.sin(frame * 0.08 + i + phase) * (10 + intensity * 18);
+    const alpha = 0.08 + i * 0.055 + intensity * 0.12;
+    ctx.strokeStyle = `rgba(90, 252, 255, ${alpha})`;
+    ctx.lineWidth = 22 - i * 2 + intensity * 9;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY + wave * 0.2);
+    ctx.bezierCurveTo(
+      startX + 170,
+      startY - 86 + wave,
+      endX - 170,
+      endY + 72 - wave,
+      endX,
+      endY,
+    );
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "rgba(242, 253, 255, 0.86)";
+  ctx.lineWidth = 3 + intensity * 3;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.bezierCurveTo(startX + 200, startY - 54, endX - 180, endY + 48, endX, endY);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawLaunchScene() {
   drawBackground();
   drawTissueFloor();
@@ -552,114 +664,93 @@ function drawLaunchScene() {
   const launchProgress = Math.min(1, launchFrame / 82);
   const beamEnd = 280 + launchProgress * (420 + chargeLevel * 180);
   const beamY = 390 + Math.sin(launchFrame * 0.08) * 10;
+  const targetX = 870;
+  const targetY = 360;
 
+  drawEnergyRings(178, 386, 76, chargeLevel);
   drawSprite("transducer", 38, 278, 270, 186);
+  drawFocusingBeam(242, beamY, beamEnd, focus.y, chargeLevel, launchFrame * 0.05);
+  drawTargetLock(targetX, targetY, 72, launchProgress);
+  drawSprite("tumor", targetX - 62, targetY - 58, 124, 116);
 
-  for (let i = 0; i < 5; i += 1) {
-    ctx.strokeStyle = `rgba(90, 252, 255, ${0.1 + i * 0.08 + chargeLevel * 0.06})`;
-    ctx.lineWidth = 18 - i * 3 + chargeLevel * 7;
+  if (launchProgress > 0.72) {
+    const shock = (launchProgress - 0.72) / 0.28;
+    ctx.strokeStyle = `rgba(143, 255, 41, ${0.75 * (1 - shock)})`;
+    ctx.lineWidth = 8 * (1 - shock) + 2;
     ctx.beginPath();
-    ctx.moveTo(242, beamY);
-    ctx.quadraticCurveTo(430, beamY - 58 + i * 16, beamEnd, focus.y);
+    ctx.arc(targetX, targetY, 40 + shock * 130, 0, Math.PI * 2);
     ctx.stroke();
   }
 
-  const targetX = 870;
-  const targetY = 360;
-  ctx.strokeStyle = "rgba(143, 255, 41, 0.8)";
-  ctx.lineWidth = 3;
-  ctx.setLineDash([10, 10]);
-  ctx.beginPath();
-  ctx.arc(targetX, targetY, 64 + Math.sin(launchFrame * 0.1) * 8, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  drawSprite("tumor", targetX - 62, targetY - 58, 124, 116);
-
   drawSprite("focus", beamEnd - 58, focus.y - 58, 116, 116);
 
-  ctx.fillStyle = "rgba(242, 253, 255, 0.94)";
-  ctx.font = "900 34px sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText("超音波發射中", 42, 82);
-
-  ctx.font = "900 18px sans-serif";
-  ctx.fillStyle = "rgba(201, 251, 255, 0.92)";
-  ctx.fillText(`能量 ${Math.round(chargeLevel * 100)}% 已釋放，焦點進入治療路徑。`, 42, 116);
-
-  ctx.fillStyle = "rgba(90, 252, 255, 0.18)";
-  ctx.fillRect(42, 142, 420, 18);
-  ctx.fillStyle = "rgba(143, 255, 41, 0.9)";
-  ctx.fillRect(42, 142, 420 * chargeLevel, 18);
-  ctx.strokeStyle = "rgba(90, 252, 255, 0.85)";
-  ctx.strokeRect(42, 142, 420, 18);
-
+  drawScannerPanel("超音波發射中", `能量 ${Math.round(chargeLevel * 100)}% 已釋放，焦點進入治療路徑。`, launchProgress, "rgba(143, 255, 41, 0.92)");
   ctx.fillStyle = "rgba(143, 255, 41, 0.96)";
   ctx.font = "900 16px sans-serif";
-  ctx.fillText("1. 定位  2. 發射  3. 穿越  4. 命中腫瘤", 42, 190);
+  ctx.textAlign = "left";
+  ctx.fillText("1. 定位  2. 聚焦  3. 發射  4. 命中腫瘤", 58, 218);
 }
 
 function drawCountdownScene() {
   drawBackground();
   drawTissueFloor();
-  drawSprite("transducer", 42, 286, 260, 178);
-  drawSprite("tumor", 808, 298, 128, 118);
+  const progress = Math.min(1, countdownFrame / 120);
+  const targetX = 872;
+  const targetY = 356;
 
-  ctx.fillStyle = "rgba(242, 253, 255, 0.94)";
-  ctx.font = "900 34px sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText("準備聚焦治療路徑", 42, 82);
+  drawEnergyRings(172, 388, 58, progress);
+  drawSprite("transducer", 42, 286, 260, 178);
+  drawTargetLock(targetX, targetY, 70, progress);
+  drawSprite("tumor", targetX - 64, targetY - 58, 128, 118);
+
+  drawScannerPanel("準備聚焦治療路徑", "掃描腫瘤邊界，避開血管、神經與正常組織。", progress);
 
   ctx.fillStyle = countdownText() === "FOCUS" ? "rgba(143, 255, 41, 0.98)" : "rgba(90, 252, 255, 0.98)";
   ctx.font = "900 128px sans-serif";
   ctx.textAlign = "center";
+  ctx.shadowColor = countdownText() === "FOCUS" ? "rgba(143, 255, 41, 0.95)" : "rgba(90, 252, 255, 0.95)";
+  ctx.shadowBlur = 28;
   ctx.fillText(countdownText(), canvas.width / 2, 280);
+  ctx.shadowBlur = 0;
 
   ctx.fillStyle = "rgba(201, 251, 255, 0.92)";
   ctx.font = "900 20px sans-serif";
-  ctx.fillText("倒數結束後，按住畫面或空白鍵充能，放開發射。", canvas.width / 2, 332);
+  ctx.fillText("倒數結束後，按住畫面或空白鍵充能，放開發射。", canvas.width / 2, 342);
 }
 
 function drawChargingScene() {
   drawBackground();
   drawTissueFloor();
+  const targetX = 872;
+  const targetY = 356;
+
+  drawEnergyRings(178, 390, 70, chargeLevel);
   drawSprite("transducer", 38, 278, 270, 186);
-  drawSprite("tumor", 818, 304, 126, 116);
+  drawTargetLock(targetX, targetY, 72, chargeLevel);
+  drawSprite("tumor", targetX - 63, targetY - 58, 126, 116);
   drawParticles();
 
   const beamLength = 220 + chargeLevel * 450;
   const beamY = 390 + Math.sin(frame * 0.1) * 8;
-  for (let i = 0; i < 5; i += 1) {
-    ctx.strokeStyle = `rgba(90, 252, 255, ${0.08 + i * 0.08 + chargeLevel * 0.08})`;
-    ctx.lineWidth = 14 - i * 2 + chargeLevel * 10;
-    ctx.beginPath();
-    ctx.moveTo(242, beamY);
-    ctx.lineTo(242 + beamLength, beamY - chargeLevel * 45);
-    ctx.stroke();
-  }
+  drawFocusingBeam(242, beamY, 242 + beamLength, beamY - chargeLevel * 45, chargeLevel, frame * 0.04);
 
   drawSprite("focus", 242 + beamLength - 45, beamY - chargeLevel * 45 - 45, 90, 90);
 
-  ctx.fillStyle = "rgba(242, 253, 255, 0.96)";
-  ctx.font = "900 34px sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText("按住充能，放開發射", 42, 82);
-
-  ctx.font = "900 18px sans-serif";
-  ctx.fillStyle = "rgba(201, 251, 255, 0.92)";
-  ctx.fillText("充能越高，焦點初始能量越高。控制節奏，別一開始就耗盡能量。", 42, 116);
-
-  ctx.fillStyle = "rgba(90, 252, 255, 0.18)";
-  ctx.fillRect(42, 146, 460, 24);
   const meterColor = chargeLevel > 0.78 ? "rgba(255, 216, 74, 0.95)" : "rgba(143, 255, 41, 0.95)";
-  ctx.fillStyle = meterColor;
-  ctx.fillRect(42, 146, 460 * chargeLevel, 24);
-  ctx.strokeStyle = "rgba(90, 252, 255, 0.88)";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(42, 146, 460, 24);
+  drawScannerPanel("按住充能，放開發射", "充能越高，焦點初始能量越高。看準節奏再放開。", chargeLevel, meterColor);
 
   ctx.fillStyle = "#f2fdff";
   ctx.font = "900 18px sans-serif";
-  ctx.fillText(`初始能量 ${Math.round(58 + chargeLevel * 42)}%`, 42, 204);
+  ctx.textAlign = "left";
+  ctx.fillText(`初始能量 ${Math.round(58 + chargeLevel * 42)}%`, 58, 218);
+
+  if (chargeLevel > 0.86) {
+    ctx.fillStyle = "rgba(255, 216, 74, 0.95)";
+    ctx.shadowColor = "rgba(255, 216, 74, 0.8)";
+    ctx.shadowBlur = 18;
+    ctx.fillText("HIGH POWER LOCK", 280, 218);
+    ctx.shadowBlur = 0;
+  }
 }
 
 function drawTissueFloor() {
