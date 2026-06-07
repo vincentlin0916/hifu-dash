@@ -28,6 +28,10 @@ body {
     linear-gradient(180deg, #08293e 0%, #051823 46%, #01080d 100%);
 }
 
+.mobile-rotate-hint {
+  display: none;
+}
+
 body::before {
   position: fixed;
   inset: 0;
@@ -441,7 +445,9 @@ canvas {
   display: block;
   width: 100%;
   height: auto;
-  min-height: 560px;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  touch-action: none;
 }
 
 .overlay {
@@ -524,5 +530,162 @@ canvas {
   #attempt,
   .coin {
     display: none;
+  }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  body {
+    overflow: hidden;
+  }
+
+  .arcade {
+    visibility: hidden;
+  }
+
+  .mobile-rotate-hint {
+    position: fixed;
+    z-index: 100;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    gap: 14px;
+    padding: 32px;
+    text-align: center;
+    background:
+      radial-gradient(circle at 50% 35%, rgba(90, 252, 255, 0.28), transparent 18rem),
+      linear-gradient(180deg, #06283b, #01080d);
+  }
+
+  .mobile-rotate-hint .phone-icon {
+    width: 92px;
+    height: 146px;
+    margin: 0 auto 12px;
+    display: grid;
+    place-items: center;
+    border: 5px solid var(--cyan);
+    border-radius: 20px;
+    color: var(--lime);
+    font-size: 3.7rem;
+    box-shadow: 0 0 28px rgba(90, 252, 255, 0.48);
+    animation: rotate-phone 1.8s ease-in-out infinite;
+  }
+
+  .mobile-rotate-hint strong {
+    color: var(--cyan);
+    font-size: 1.8rem;
+  }
+
+  .mobile-rotate-hint span {
+    max-width: 320px;
+    color: #c9fbff;
+    line-height: 1.6;
+  }
+}
+
+@keyframes rotate-phone {
+  0%,
+  35% {
+    transform: rotate(0deg);
+  }
+
+  65%,
+  100% {
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #01080d;
+  }
+
+  .arcade {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+  }
+
+  .marquee,
+  .level-panel,
+  .use-cases {
+    display: none;
+  }
+
+  .cabinet {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .game-card {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+    background: #031016;
+    box-shadow: none;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    object-fit: contain;
+  }
+
+  .hud {
+    top: max(8px, env(safe-area-inset-top));
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    grid-template-columns: minmax(150px, 1fr) auto auto;
+    gap: 8px;
+  }
+
+  .progress-track {
+    height: 12px;
+  }
+
+  .hud span {
+    font-size: 0.9rem;
+  }
+
+  #attempt,
+  .coin {
+    display: none;
+  }
+
+  .icon-button {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .overlay {
+    padding:
+      max(18px, env(safe-area-inset-top))
+      max(28px, env(safe-area-inset-right))
+      max(18px, env(safe-area-inset-bottom))
+      max(28px, env(safe-area-inset-left));
+  }
+
+  .overlay h2 {
+    font-size: clamp(2.8rem, 12vh, 5rem);
+  }
+
+  .overlay p {
+    max-width: 720px;
+    margin-top: 10px;
+    font-size: clamp(0.85rem, 3.5vh, 1.1rem);
+  }
+
+  .play-button.small {
+    min-width: 160px;
+    margin: 8px auto;
+    padding: 10px 22px;
+    font-size: 1.2rem;
   }
 }
