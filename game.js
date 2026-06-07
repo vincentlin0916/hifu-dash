@@ -45,13 +45,23 @@ let attempt = 1;
 let speed = 6.2;
 let frame = 0;
 let launchFrame = 0;
+let countdownFrame = 0;
+let chargeLevel = 0;
+let chargeDirection = 1;
+let isCharging = false;
+let ablationMessage = null;
+let painReliefMessage = null;
 let energy = 100;
 let safety = 100;
+let heat = 0;
+let painLevel = 10;
+let painTreatments = 0;
 let hits = 0;
 let coins = 0;
 let distance = 0;
 let obstacles = [];
 let tumors = [];
+let painSpots = [];
 let pickups = [];
 let particles = [];
 
@@ -68,8 +78,11 @@ function resetGame() {
   state = "playing";
   frame = 0;
   speed = 6.2;
-  energy = 100;
+  energy = Math.round(58 + chargeLevel * 42);
   safety = 100;
+  heat = 0;
+  painLevel = 10;
+  painTreatments = 0;
   hits = 0;
   coins = 0;
   distance = 0;
@@ -78,6 +91,7 @@ function resetGame() {
   focus.trail = [];
   obstacles = [];
   tumors = [];
+  painSpots = [];
   pickups = [];
   particles = [];
   overlay.className = "overlay hidden";
@@ -87,12 +101,19 @@ function resetGame() {
   updateUi();
 }
 
-function startLaunch() {
-  state = "launching";
+function startCountdown() {
+  state = "countdown";
+  countdownFrame = 0;
   launchFrame = 0;
   frame = 0;
-  energy = 100;
+  chargeLevel = 0;
+  chargeDirection = 1;
+  isCharging = false;
+  energy = 58;
   safety = 100;
+  heat = 0;
+  painLevel = 10;
+  painTreatments = 0;
   hits = 0;
   coins = 0;
   distance = 0;
@@ -101,11 +122,32 @@ function startLaunch() {
   focus.trail = [];
   obstacles = [];
   tumors = [];
+  painSpots = [];
   pickups = [];
   particles = [];
   overlay.className = "overlay hidden";
   startButton.textContent = "RETRY";
   ui.attempt.textContent = `ATTEMPT ${attempt}`;
+  updateUi();
+}
+
+function startCharging() {
+  state = "charging";
+  launchFrame = 0;
+  chargeLevel = 0;
+  chargeDirection = 1;
+  isCharging = false;
+  energy = 58;
+  updateUi();
+}
+
+function releaseUltrasound() {
+  if (state !== "charging") return;
+  isCharging = false;
+  state = "launching";
+  launchFrame = 0;
+  energy = Math.round(58 + chargeLevel * 42);
+  addBurst(240, 390, "#8fff29", 18, 7);
   updateUi();
 }
 
@@ -117,6 +159,9 @@ function seedOpeningPattern() {
   obstacles.push(makeObstacle("gut", 2300, 468, -0.06));
   tumors.push(makeTumor(1340, 456));
   tumors.push(makeTumor(2600, 330));
+  painSpots.push(makePainSpot(1665, 486));
+  painSpots.push(makePainSpot(2140, 392));
+  painSpots.push(makePainSpot(2920, 500));
   pickups.push({ x: 620, y: 350, r: 14, taken: false });
   pickups.push({ x: 1840, y: 210, r: 14, taken: false });
 }
@@ -164,13 +209,30 @@ function makeTumor(x, y) {
   };
 }
 
+function makePainSpot(x, y) {
+  return {
+    x,
+    y,
+    r: 34,
+    progress: 0,
+    pulse: Math.random() * Math.PI,
+    treated: false,
+    overheated: false,
+  };
+}
+
 function jump() {
   if (state === "menu" || state === "dead" || state === "complete") {
     attempt = state === "menu" ? 1 : attempt + 1;
-    startLaunch();
+    startCountdown();
     return;
   }
 
+  if (state === "countdown") return;
+  if (state === "charging") {
+    isCharging = true;
+    return;
+  }
   if (state === "launching") return;
 
   if (state === "paused") {
@@ -216,6 +278,10 @@ function spawnTumor() {
   tumors.push(makeTumor(canvas.width + 130, 255 + Math.random() * 245));
 }
 
+function spawnPainSpot() {
+  painSpots.push(makePainSpot(canvas.width + 150, 392 + Math.random() * 120));
+}
+
 function spawnPickup() {
   pickups.push({ x: canvas.width + 90, y: 210 + Math.random() * 280, r: 13, taken: false });
 }
@@ -252,6 +318,16 @@ function damagePlayer(amount, color) {
 }
 
 function update() {
+  if (state === "countdown") {
+    updateCountdown();
+    return;
+  }
+
+  if (state === "charging") {
+    updateCharging();
+    return;
+  }
+
   if (state === "launching") {
     updateLaunch();
     return;
@@ -282,6 +358,7 @@ function update() {
   if (frame % 72 === 0) spawnObstacle();
   if (frame % 132 === 0) spawnTumor();
   if (frame % 118 === 0) spawnPickup();
+  if (frame % 210 === 0) spawnPainSpot();
 
   obstacles.forEach((obstacle) => {
     obstacle.x -= speed;
@@ -305,9 +382,47 @@ function update() {
       tumor.hit = true;
       hits += 1;
       energy = Math.min(100, energy + 13);
+      ablationMessage = { x: tumor.x, y: tumor.y, life: 86 };
       addBurst(tumor.x, tumor.y, "#8fff29", 42, 11);
     }
   });
+
+  let treatingPain = false;
+  painSpots.forEach((spot) => {
+    spot.x -= speed;
+    spot.pulse += 0.11;
+    if (spot.treated) return;
+
+    const inTherapyZone = Math.hypot(focus.x - spot.x, focus.y - spot.y) < focus.radius + spot.r;
+    if (inTherapyZone) {
+      treatingPain = true;
+      spot.progress = Math.min(100, spot.progress + 1.55 + chargeLevel * 0.4);
+      heat = Math.min(120, heat + 1.15 + chargeLevel * 0.35);
+      energy = Math.max(0, energy - 0.08);
+      if (frame % 7 === 0) addBurst(spot.x, spot.y, "#ff9c5b", 5, 4);
+    } else {
+      spot.progress = Math.max(0, spot.progress - 0.22);
+    }
+
+    if (spot.progress >= 100) {
+      spot.treated = true;
+      painTreatments += 1;
+      painLevel = Math.max(0, painLevel - 4);
+      heat = Math.max(0, heat - 24);
+      painReliefMessage = { x: spot.x, y: spot.y, life: 95 };
+      addBurst(spot.x, spot.y, "#ffd84a", 34, 9);
+    }
+  });
+
+  if (!treatingPain) {
+    heat = Math.max(0, heat - 0.55);
+  }
+
+  if (heat >= 100 && frame % 22 === 0) {
+    safety = Math.max(0, safety - 4);
+    heat = Math.max(74, heat - 16);
+    addBurst(focus.x, focus.y, "#ff4b45", 16, 7);
+  }
 
   pickups.forEach((pickup) => {
     pickup.x -= speed;
@@ -324,36 +439,81 @@ function update() {
     particle.vy += 0.04;
     particle.life -= 1;
   });
+  if (ablationMessage) {
+    ablationMessage.x -= speed;
+    ablationMessage.life -= 1;
+    if (ablationMessage.life <= 0) ablationMessage = null;
+  }
+  if (painReliefMessage) {
+    painReliefMessage.x -= speed;
+    painReliefMessage.life -= 1;
+    if (painReliefMessage.life <= 0) painReliefMessage = null;
+  }
 
   obstacles = obstacles.filter((obstacle) => obstacle.x > -260);
   tumors = tumors.filter((tumor) => tumor.x > -140);
+  painSpots = painSpots.filter((spot) => spot.x > -140);
   pickups = pickups.filter((pickup) => pickup.x > -80 && !pickup.taken);
   particles = particles.filter((particle) => particle.life > 0);
 
   if (safety <= 0 || energy <= 0) {
     state = "dead";
-    showOverlay("YOU DIED!", "不能碰正常組織：血管、神經、器官、胸腔、骨頭、腸胃都會扣安全率。", "Space / Click / Tap RETRY");
-  } else if (distance >= levelLength || hits >= 6) {
+    showOverlay("YOU DIED!", "不能碰正常組織，也不能讓骨痛治療過熱。重新規劃路徑再試一次。", "Space / Click / Tap RETRY");
+  } else if (distance >= levelLength || hits >= 4 || painLevel <= 0) {
     state = "complete";
-    showOverlay("LEVEL COMPLETE!", `腫瘤命中 ${hits} 次，正常組織安全率 ${Math.round(safety)}%。`, "Space / Click / Tap NEXT LEVEL", "complete");
+    showOverlay("LEVEL COMPLETE!", `腫瘤命中 ${hits} 次，骨痛等級降到 ${painLevel}/10，安全率 ${Math.round(safety)}%。`, "Space / Click / Tap NEXT LEVEL", "complete");
   }
 
+  updateUi();
+}
+
+function updateCountdown() {
+  countdownFrame += 1;
+  frame += 1;
+  if (countdownFrame >= 120) startCharging();
+  updateUi();
+}
+
+function updateCharging() {
+  frame += 1;
+  if (isCharging) {
+    chargeLevel += 0.018 * chargeDirection;
+    if (chargeLevel >= 1) {
+      chargeLevel = 1;
+      chargeDirection = -1;
+    }
+    if (chargeLevel <= 0.08) {
+      chargeLevel = 0.08;
+      chargeDirection = 1;
+    }
+  }
+  energy = Math.round(58 + chargeLevel * 42);
+  if (frame % 10 === 0 && isCharging) {
+    addBurst(245 + chargeLevel * 220, 390, "#5afcff", 4, 3);
+  }
+  particles.forEach((particle) => {
+    particle.x += particle.vx;
+    particle.y += particle.vy;
+    particle.vy += 0.04;
+    particle.life -= 1;
+  });
+  particles = particles.filter((particle) => particle.life > 0);
   updateUi();
 }
 
 function updateLaunch() {
   launchFrame += 1;
   frame += 1;
-  const charge = Math.min(1, launchFrame / 110);
-  energy = Math.round(45 + charge * 55);
-  focus.x = 178 + easeOutCubic(charge) * 26;
-  focus.y = 430 - Math.sin(charge * Math.PI) * 44;
+  const launchProgress = Math.min(1, launchFrame / 82);
+  energy = Math.round(58 + chargeLevel * 42);
+  focus.x = 178 + easeOutCubic(launchProgress) * 26;
+  focus.y = 430 - Math.sin(launchProgress * Math.PI) * (32 + chargeLevel * 30);
 
   if (launchFrame % 8 === 0) {
-    addBurst(210 + charge * 190, focus.y, "#5afcff", 4, 3);
+    addBurst(210 + launchProgress * 190, focus.y, "#5afcff", 4 + Math.round(chargeLevel * 6), 3 + chargeLevel * 4);
   }
 
-  if (launchFrame >= 130) {
+  if (launchFrame >= 96) {
     focus.x = 178;
     resetGame();
   } else {
@@ -369,7 +529,7 @@ function updateUi() {
   const progress = Math.min(100, Math.round((distance / levelLength) * 100));
   ui.energy.textContent = `${Math.round(energy)}%`;
   ui.safety.textContent = `${Math.round(safety)}%`;
-  ui.hits.textContent = hits;
+  ui.hits.textContent = `${hits + painTreatments}`;
   ui.distance.textContent = `${Math.round(distance)} m`;
   ui.progressText.textContent = `${progress}%`;
   ui.progressBar.style.width = `${progress}%`;
@@ -381,6 +541,13 @@ function showOverlay(title, copy, hint, mode = "") {
   overlay.querySelector("h2").textContent = title;
   overlay.querySelector("p").textContent = copy;
   overlay.querySelector("small").textContent = hint;
+}
+
+function countdownText() {
+  if (countdownFrame < 30) return "3";
+  if (countdownFrame < 60) return "2";
+  if (countdownFrame < 90) return "1";
+  return "FOCUS";
 }
 
 function drawBackground() {
@@ -422,15 +589,15 @@ function drawLaunchScene() {
   drawBackground();
   drawTissueFloor();
 
-  const charge = Math.min(1, launchFrame / 110);
-  const beamEnd = 280 + charge * 520;
+  const launchProgress = Math.min(1, launchFrame / 82);
+  const beamEnd = 280 + launchProgress * (420 + chargeLevel * 180);
   const beamY = 390 + Math.sin(launchFrame * 0.08) * 10;
 
   drawSprite("transducer", 38, 278, 270, 186);
 
   for (let i = 0; i < 5; i += 1) {
-    ctx.strokeStyle = `rgba(90, 252, 255, ${0.08 + i * 0.08})`;
-    ctx.lineWidth = 18 - i * 3;
+    ctx.strokeStyle = `rgba(90, 252, 255, ${0.1 + i * 0.08 + chargeLevel * 0.06})`;
+    ctx.lineWidth = 18 - i * 3 + chargeLevel * 7;
     ctx.beginPath();
     ctx.moveTo(242, beamY);
     ctx.quadraticCurveTo(430, beamY - 58 + i * 16, beamEnd, focus.y);
@@ -457,18 +624,82 @@ function drawLaunchScene() {
 
   ctx.font = "900 18px sans-serif";
   ctx.fillStyle = "rgba(201, 251, 255, 0.92)";
-  ctx.fillText("探頭聚焦能量，形成可控制的藍色焦點。下一步才進入 HIFU Dash。", 42, 116);
+  ctx.fillText(`能量 ${Math.round(chargeLevel * 100)}% 已釋放，焦點進入治療路徑。`, 42, 116);
 
   ctx.fillStyle = "rgba(90, 252, 255, 0.18)";
   ctx.fillRect(42, 142, 420, 18);
   ctx.fillStyle = "rgba(143, 255, 41, 0.9)";
-  ctx.fillRect(42, 142, 420 * charge, 18);
+  ctx.fillRect(42, 142, 420 * chargeLevel, 18);
   ctx.strokeStyle = "rgba(90, 252, 255, 0.85)";
   ctx.strokeRect(42, 142, 420, 18);
 
   ctx.fillStyle = "rgba(143, 255, 41, 0.96)";
   ctx.font = "900 16px sans-serif";
   ctx.fillText("1. 定位  2. 發射  3. 穿越  4. 命中腫瘤", 42, 190);
+}
+
+function drawCountdownScene() {
+  drawBackground();
+  drawTissueFloor();
+  drawSprite("transducer", 42, 286, 260, 178);
+  drawSprite("tumor", 808, 298, 128, 118);
+
+  ctx.fillStyle = "rgba(242, 253, 255, 0.94)";
+  ctx.font = "900 34px sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("準備聚焦治療路徑", 42, 82);
+
+  ctx.fillStyle = countdownText() === "FOCUS" ? "rgba(143, 255, 41, 0.98)" : "rgba(90, 252, 255, 0.98)";
+  ctx.font = "900 128px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(countdownText(), canvas.width / 2, 280);
+
+  ctx.fillStyle = "rgba(201, 251, 255, 0.92)";
+  ctx.font = "900 20px sans-serif";
+  ctx.fillText("倒數結束後，按住畫面或空白鍵充能，放開發射。", canvas.width / 2, 332);
+}
+
+function drawChargingScene() {
+  drawBackground();
+  drawTissueFloor();
+  drawSprite("transducer", 38, 278, 270, 186);
+  drawSprite("tumor", 818, 304, 126, 116);
+  drawParticles();
+
+  const beamLength = 220 + chargeLevel * 450;
+  const beamY = 390 + Math.sin(frame * 0.1) * 8;
+  for (let i = 0; i < 5; i += 1) {
+    ctx.strokeStyle = `rgba(90, 252, 255, ${0.08 + i * 0.08 + chargeLevel * 0.08})`;
+    ctx.lineWidth = 14 - i * 2 + chargeLevel * 10;
+    ctx.beginPath();
+    ctx.moveTo(242, beamY);
+    ctx.lineTo(242 + beamLength, beamY - chargeLevel * 45);
+    ctx.stroke();
+  }
+
+  drawSprite("focus", 242 + beamLength - 45, beamY - chargeLevel * 45 - 45, 90, 90);
+
+  ctx.fillStyle = "rgba(242, 253, 255, 0.96)";
+  ctx.font = "900 34px sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("按住充能，放開發射", 42, 82);
+
+  ctx.font = "900 18px sans-serif";
+  ctx.fillStyle = "rgba(201, 251, 255, 0.92)";
+  ctx.fillText("充能越高，焦點初始能量越高。控制節奏，別一開始就耗盡能量。", 42, 116);
+
+  ctx.fillStyle = "rgba(90, 252, 255, 0.18)";
+  ctx.fillRect(42, 146, 460, 24);
+  const meterColor = chargeLevel > 0.78 ? "rgba(255, 216, 74, 0.95)" : "rgba(143, 255, 41, 0.95)";
+  ctx.fillStyle = meterColor;
+  ctx.fillRect(42, 146, 460 * chargeLevel, 24);
+  ctx.strokeStyle = "rgba(90, 252, 255, 0.88)";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(42, 146, 460, 24);
+
+  ctx.fillStyle = "#f2fdff";
+  ctx.font = "900 18px sans-serif";
+  ctx.fillText(`初始能量 ${Math.round(58 + chargeLevel * 42)}%`, 42, 204);
 }
 
 function drawTissueFloor() {
@@ -645,6 +876,41 @@ function drawObstacle(obstacle) {
   ctx.fillText(obstacle.label, obstacle.x + obstacle.w / 2, obstacle.y - 12);
 }
 
+function drawPainSpot(spot) {
+  if (spot.treated) return;
+  const pulse = 1 + Math.sin(spot.pulse) * 0.12;
+  const radius = spot.r * pulse;
+
+  const glow = ctx.createRadialGradient(spot.x, spot.y, 4, spot.x, spot.y, radius * 2.5);
+  glow.addColorStop(0, "rgba(255, 238, 122, 0.9)");
+  glow.addColorStop(0.35, "rgba(255, 120, 68, 0.42)");
+  glow.addColorStop(1, "rgba(255, 75, 69, 0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(spot.x, spot.y, radius * 2.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255, 112, 72, 0.9)";
+  ctx.strokeStyle = "#fff1a8";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(spot.x, spot.y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(3, 16, 22, 0.72)";
+  ctx.fillRect(spot.x - 42, spot.y + radius + 16, 84, 10);
+  ctx.fillStyle = heat > 82 ? "#ff4b45" : "#8fff29";
+  ctx.fillRect(spot.x - 42, spot.y + radius + 16, 84 * (spot.progress / 100), 10);
+  ctx.strokeStyle = "rgba(242, 253, 255, 0.72)";
+  ctx.strokeRect(spot.x - 42, spot.y + radius + 16, 84, 10);
+
+  ctx.fillStyle = "#f2fdff";
+  ctx.font = "900 14px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Pain Spot", spot.x, spot.y - radius - 14);
+}
+
 function drawTumor(tumor) {
   if (tumor.hit) return;
   const pulse = 1 + Math.sin(tumor.pulse) * 0.09;
@@ -709,6 +975,40 @@ function drawParticles() {
   ctx.globalAlpha = 1;
 }
 
+function drawAblationMessage() {
+  if (!ablationMessage) return;
+  const alpha = Math.min(1, ablationMessage.life / 24);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.textAlign = "center";
+  ctx.font = "900 24px sans-serif";
+  ctx.fillStyle = "rgba(143, 255, 41, 0.98)";
+  ctx.shadowColor = "rgba(143, 255, 41, 0.9)";
+  ctx.shadowBlur = 18;
+  ctx.fillText("ABLATION COMPLETE", ablationMessage.x, ablationMessage.y - 76);
+  ctx.font = "900 18px sans-serif";
+  ctx.fillStyle = "#f2fdff";
+  ctx.fillText("治療完成", ablationMessage.x, ablationMessage.y - 48);
+  ctx.restore();
+}
+
+function drawPainReliefMessage() {
+  if (!painReliefMessage) return;
+  const alpha = Math.min(1, painReliefMessage.life / 24);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.textAlign = "center";
+  ctx.font = "900 24px sans-serif";
+  ctx.fillStyle = "rgba(255, 216, 74, 0.98)";
+  ctx.shadowColor = "rgba(255, 145, 69, 0.9)";
+  ctx.shadowBlur = 18;
+  ctx.fillText("PAIN RELIEF COMPLETE", painReliefMessage.x, painReliefMessage.y - 78);
+  ctx.font = "900 18px sans-serif";
+  ctx.fillStyle = "#f2fdff";
+  ctx.fillText(`疼痛降至 ${painLevel}/10`, painReliefMessage.x, painReliefMessage.y - 50);
+  ctx.restore();
+}
+
 function drawDecorations() {
   ctx.fillStyle = "rgba(255, 216, 74, 0.95)";
   ctx.font = "900 26px sans-serif";
@@ -720,16 +1020,28 @@ function drawDecorations() {
   ctx.fillStyle = "rgba(242, 253, 255, 0.82)";
   ctx.font = "900 18px sans-serif";
   ctx.textAlign = "left";
-  ctx.fillText("治療路徑：避開正常組織  →  聚焦能量  →  命中腫瘤", 32, canvas.height - 34);
+  ctx.fillText("治療路徑：避開正常組織  →  命中腫瘤 / 穩定消融骨痛點", 32, canvas.height - 34);
   ctx.font = "900 16px sans-serif";
   ctx.fillStyle = "rgba(143, 255, 41, 0.96)";
-  ctx.fillText("可碰：腫瘤 / 金色能量幣", 32, 86);
+  ctx.fillText("可碰：腫瘤 / 骨痛點 / 金色能量幣", 32, 86);
   ctx.fillStyle = "rgba(255, 143, 133, 0.96)";
   ctx.fillText("不可碰：血管 / 神經 / 器官 / 胸腔 / 骨頭 / 腸胃", 32, 112);
+  ctx.fillStyle = heat > 82 ? "rgba(255, 75, 69, 0.98)" : "rgba(255, 216, 74, 0.96)";
+  ctx.fillText(`骨痛 ${painLevel}/10   熱量 ${Math.round(heat)}%`, 32, 138);
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (state === "countdown") {
+    drawCountdownScene();
+    return;
+  }
+
+  if (state === "charging") {
+    drawChargingScene();
+    return;
+  }
+
   if (state === "launching") {
     drawLaunchScene();
     return;
@@ -739,9 +1051,12 @@ function draw() {
   drawTissueFloor();
   drawDecorations();
   tumors.forEach(drawTumor);
+  painSpots.forEach(drawPainSpot);
   pickups.forEach(drawPickup);
   obstacles.forEach(drawObstacle);
   drawParticles();
+  drawAblationMessage();
+  drawPainReliefMessage();
   drawFocus();
 }
 
@@ -753,17 +1068,25 @@ function loop() {
 
 startButton.addEventListener("click", () => {
   attempt = state === "menu" ? 1 : attempt + 1;
-  startLaunch();
+  startCountdown();
 });
 overlayPlay.addEventListener("click", jump);
 pauseButton.addEventListener("click", togglePause);
 canvas.addEventListener("pointerdown", jump);
+canvas.addEventListener("pointerup", releaseUltrasound);
+canvas.addEventListener("pointercancel", releaseUltrasound);
 window.addEventListener("keydown", (event) => {
   if (event.code === "Space" || event.code === "ArrowUp") {
     event.preventDefault();
     jump();
   }
   if (event.code === "KeyP") togglePause();
+});
+window.addEventListener("keyup", (event) => {
+  if (event.code === "Space" || event.code === "ArrowUp") {
+    event.preventDefault();
+    releaseUltrasound();
+  }
 });
 
 if (!CanvasRenderingContext2D.prototype.roundRect) {

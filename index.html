@@ -34,8 +34,8 @@
             <h2>碰撞規則</h2>
             <div class="rule safe">
               <strong>可以碰</strong>
-              <span>腫瘤、金色能量幣</span>
-              <small>命中腫瘤加分；能量幣補充展示分數。</small>
+              <span>腫瘤、骨痛點、金色能量幣</span>
+              <small>命中腫瘤加分；靠近骨痛點可累積治療進度。</small>
             </div>
             <div class="rule danger">
               <strong>不能碰</strong>
@@ -50,7 +50,7 @@
               <li><strong>定位</strong><span>探頭對準治療路徑</span></li>
               <li><strong>發射</strong><span>超音波能量聚焦成光點</span></li>
               <li><strong>穿越</strong><span>避開正常組織</span></li>
-              <li><strong>命中</strong><span>只碰腫瘤與能量幣</span></li>
+              <li><strong>治療</strong><span>命中腫瘤，穩定消融骨痛點</span></li>
             </ol>
           </section>
 
@@ -70,7 +70,7 @@
           <div class="stats">
             <div><span>能量</span><strong id="energy">100%</strong></div>
             <div><span>安全率</span><strong id="safety">100%</strong></div>
-            <div><span>命中</span><strong id="hits">0</strong></div>
+            <div><span>治療</span><strong id="hits">0</strong></div>
             <div><span>距離</span><strong id="distance">0 m</strong></div>
           </div>
         </aside>
@@ -86,7 +86,7 @@
           <canvas id="game" width="1280" height="720" aria-label="HIFU Dash game canvas"></canvas>
           <div id="overlay" class="overlay menu">
             <h2>HIFU DASH</h2>
-            <p>先發射超音波，形成藍色焦點；接著穿越正常組織，只命中腫瘤。</p>
+            <p>先發射超音波，形成藍色焦點；接著命中腫瘤，也可穩定消融骨痛點。</p>
             <button class="play-button small">發射超音波</button>
             <small>發射後進入 Dash。Space / Click / Tap 跳躍，P 暫停</small>
           </div>
