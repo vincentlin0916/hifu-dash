@@ -42,7 +42,7 @@ const focus = {
 
 let state = "menu";
 let attempt = 1;
-let speed = 6.2;
+let speed = 4.6;
 let frame = 0;
 let launchFrame = 0;
 let countdownFrame = 0;
@@ -77,7 +77,7 @@ const obstacleTypes = [
 function resetGame() {
   state = "playing";
   frame = 0;
-  speed = 6.2;
+  speed = 4.6;
   energy = Math.round(58 + chargeLevel * 42);
   safety = 100;
   heat = 0;
@@ -160,7 +160,7 @@ function seedOpeningPattern() {
   obstacles.push(makeObstacle("gut", 2920, 468, -0.06));
   tumors.push(makeTumor(1460, 456));
   tumors.push(makeTumor(3280, 330));
-  painSpots.push(makePainSpot(firstBone, 0.48, 0.42, 108, 24));
+  painSpots.push(makePainSpot(firstBone, 0.48, 0.5, 100, 18));
   pickups.push({ x: 620, y: 350, r: 14, taken: false });
   pickups.push({ x: 2180, y: 210, r: 14, taken: false });
 }
@@ -208,13 +208,14 @@ function makeTumor(x, y) {
   };
 }
 
-function makePainSpot(bone, offsetXRatio = 0.5, offsetYRatio = 0.42, rx = 108, ry = 24) {
+function makePainSpot(bone, offsetXRatio = 0.5, offsetYRatio = 0.5, rx = 96, ry = 18) {
+  const anchor = bonePainAnchor(bone, offsetXRatio, offsetYRatio);
   return {
     bone,
     offsetXRatio,
     offsetYRatio,
-    x: bone.x + bone.w * offsetXRatio,
-    y: bone.y + bone.h * offsetYRatio,
+    x: anchor.x,
+    y: anchor.y,
     rx,
     ry,
     r: Math.max(rx, ry),
@@ -223,6 +224,16 @@ function makePainSpot(bone, offsetXRatio = 0.5, offsetYRatio = 0.42, rx = 108, r
     treated: false,
     overheated: false,
   };
+}
+
+function bonePainAnchor(bone, offsetXRatio, offsetYRatio) {
+  const visibleX = bone.x - 12;
+  const visibleY = bone.y - 18;
+  const visibleW = bone.w + 48;
+  const visibleH = bone.h + 34;
+  const x = visibleX + visibleW * Math.max(0.28, Math.min(0.72, offsetXRatio));
+  const y = visibleY + visibleH * Math.max(0.4, Math.min(0.62, offsetYRatio));
+  return { x, y };
 }
 
 function jump() {
@@ -278,7 +289,7 @@ function spawnObstacle() {
   const obstacle = makeObstacle(type.kind, canvas.width + 100, y, angle);
   obstacles.push(obstacle);
   if (type.kind === "bone" && Math.random() > 0.2) {
-    painSpots.push(makePainSpot(obstacle, 0.48 + (Math.random() - 0.5) * 0.18, 0.38 + Math.random() * 0.18, 98 + Math.random() * 34, 22 + Math.random() * 8));
+    painSpots.push(makePainSpot(obstacle, 0.5 + (Math.random() - 0.5) * 0.12, 0.5 + (Math.random() - 0.5) * 0.08, 88 + Math.random() * 24, 16 + Math.random() * 5));
   }
 }
 
@@ -289,7 +300,7 @@ function spawnTumor() {
 function spawnPainSpot() {
   const bone = makeObstacle("bone", canvas.width + 240, groundY - 92 - Math.random() * 58, (Math.random() - 0.5) * 0.08);
   obstacles.push(bone);
-  painSpots.push(makePainSpot(bone, 0.5, 0.42, 116 + Math.random() * 28, 24 + Math.random() * 6));
+  painSpots.push(makePainSpot(bone, 0.5, 0.5, 98 + Math.random() * 24, 16 + Math.random() * 5));
 }
 
 function spawnPickup() {
@@ -346,8 +357,8 @@ function update() {
   if (state !== "playing") return;
 
   frame += 1;
-  speed += 0.002;
-  distance += speed / 12;
+  speed += 0.0009;
+  distance += speed / 14;
   energy = Math.min(100, energy + 0.025);
   focus.vy += 0.68;
   focus.y += focus.vy;
@@ -365,10 +376,10 @@ function update() {
   focus.trail.unshift({ x: focus.x, y: focus.y, life: 1 });
   focus.trail = focus.trail.slice(0, 18).map((dot) => ({ ...dot, life: dot.life - 0.045 }));
 
-  if (frame % 104 === 0) spawnObstacle();
-  if (frame % 178 === 0) spawnTumor();
-  if (frame % 146 === 0) spawnPickup();
-  if (frame % 280 === 0) spawnPainSpot();
+  if (frame % 142 === 0) spawnObstacle();
+  if (frame % 230 === 0) spawnTumor();
+  if (frame % 190 === 0) spawnPickup();
+  if (frame % 360 === 0) spawnPainSpot();
 
   obstacles.forEach((obstacle) => {
     obstacle.x -= speed;
@@ -399,8 +410,9 @@ function update() {
 
   let treatingPain = false;
   painSpots.forEach((spot) => {
-    spot.x = spot.bone.x + spot.bone.w * spot.offsetXRatio;
-    spot.y = spot.bone.y + spot.bone.h * spot.offsetYRatio;
+    const anchor = bonePainAnchor(spot.bone, spot.offsetXRatio, spot.offsetYRatio);
+    spot.x = anchor.x;
+    spot.y = anchor.y;
     spot.pulse += 0.11;
     if (spot.treated || spot.bone.hit) return;
 
