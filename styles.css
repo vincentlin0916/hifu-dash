@@ -217,6 +217,66 @@ h1 {
   background: radial-gradient(circle, rgba(90, 252, 255, 0.15), rgba(255, 255, 255, 0.04));
 }
 
+.rules-card {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(90, 252, 255, 0.28);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.rules-card h2 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+
+.rule {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.rule strong,
+.rule span,
+.rule small {
+  display: block;
+}
+
+.rule strong {
+  font-size: 1rem;
+}
+
+.rule span {
+  margin-top: 4px;
+  color: #f2fdff;
+  font-weight: 900;
+}
+
+.rule small {
+  margin-top: 5px;
+  color: #c9fbff;
+  line-height: 1.45;
+}
+
+.rule.safe {
+  border: 1px solid rgba(143, 255, 41, 0.42);
+  background: linear-gradient(90deg, rgba(60, 163, 28, 0.2), rgba(90, 252, 255, 0.08));
+}
+
+.rule.safe strong {
+  color: var(--lime);
+}
+
+.rule.danger {
+  border: 1px solid rgba(255, 75, 69, 0.42);
+  background: linear-gradient(90deg, rgba(255, 75, 69, 0.18), rgba(255, 216, 74, 0.08));
+}
+
+.rule.danger strong {
+  color: #ff8f85;
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

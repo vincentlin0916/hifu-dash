@@ -25,10 +25,24 @@
             <div>
               <span>展示關卡</span>
               <strong>Uterine Fibroid</strong>
-              <small>一關做精美：血管、神經、器官、腫瘤全部完整呈現。</small>
+              <small>一關做精美：血管、神經、器官、胸腔、骨頭、腸胃與腫瘤全部完整呈現。</small>
               <em>★★★</em>
             </div>
           </article>
+
+          <section class="rules-card">
+            <h2>碰撞規則</h2>
+            <div class="rule safe">
+              <strong>可以碰</strong>
+              <span>腫瘤、金色能量幣</span>
+              <small>命中腫瘤加分；能量幣補充展示分數。</small>
+            </div>
+            <div class="rule danger">
+              <strong>不能碰</strong>
+              <span>血管、神經、器官、胸腔、骨頭、腸胃</span>
+              <small>碰到正常組織會扣安全率，歸零就失敗。</small>
+            </div>
+          </section>
 
           <div class="asset-strip" aria-label="HIFU Dash art assets">
             <img src="assets/focus-orb.svg" alt="超音波焦點" />
@@ -37,6 +51,9 @@
             <img src="assets/organ.svg" alt="器官" />
             <img src="assets/tumor.svg" alt="腫瘤" />
             <img src="assets/coin.svg" alt="能量幣" />
+            <img src="assets/chest.svg" alt="胸腔組織" />
+            <img src="assets/bone.svg" alt="骨頭" />
+            <img src="assets/gut.svg" alt="腸胃" />
           </div>
 
           <div class="stats">
@@ -58,7 +75,7 @@
           <canvas id="game" width="1280" height="720" aria-label="HIFU Dash game canvas"></canvas>
           <div id="overlay" class="overlay menu">
             <h2>HIFU DASH</h2>
-            <p>像 Geometry Dash，一眼懂 HIFU：能量只該打到腫瘤。</p>
+            <p>可以碰：腫瘤與金色能量幣。不能碰：血管、神經、器官、胸腔、骨頭、腸胃。</p>
             <button class="play-button small">PLAY</button>
             <small>Space / Click / Tap 跳躍，P 暫停</small>
           </div>

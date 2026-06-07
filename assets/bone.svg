@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 290 150">
+  <defs>
+    <linearGradient id="bone" x1="0" x2="1">
+      <stop offset="0" stop-color="#7edfff"/>
+      <stop offset=".24" stop-color="#e8ffff"/>
+      <stop offset=".54" stop-color="#a9f5ff"/>
+      <stop offset=".82" stop-color="#5ccbe8"/>
+      <stop offset="1" stop-color="#14728f"/>
+    </linearGradient>
+    <filter id="boneGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#7effff" flood-opacity=".75"/>
+      <feDropShadow dx="0" dy="9" stdDeviation="8" flood-color="#000" flood-opacity=".4"/>
+    </filter>
+  </defs>
+  <g filter="url(#boneGlow)">
+    <path d="M50 34c19-25 57-7 48 24h94c-9-31 29-49 48-24 24-4 43 16 35 39 8 24-11 43-35 39-19 25-57 7-48-24H98c9 31-29 49-48 24-24 4-43-16-35-39-8-24 11-43 35-39Z" fill="url(#bone)" stroke="#eaffff" stroke-width="6"/>
+    <path d="M91 65h108" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity=".5"/>
+    <path d="M111 91h70" stroke="#177895" stroke-width="5" stroke-linecap="round" opacity=".38"/>
+  </g>
+</svg>

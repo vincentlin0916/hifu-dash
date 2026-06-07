@@ -21,6 +21,9 @@ const sprites = loadSprites({
   vessel: "assets/vessel.svg",
   nerve: "assets/nerve.svg",
   organ: "assets/organ.svg",
+  chest: "assets/chest.svg",
+  bone: "assets/bone.svg",
+  gut: "assets/gut.svg",
   tumor: "assets/tumor.svg",
   coin: "assets/coin.svg",
   poster: "assets/level-poster.svg",
@@ -51,9 +54,12 @@ let pickups = [];
 let particles = [];
 
 const obstacleTypes = [
-  { kind: "vessel", label: "血管", color: "#ff4b45", w: 190, h: 34, damage: 18 },
-  { kind: "nerve", label: "神經", color: "#ffd84a", w: 54, h: 145, damage: 24 },
-  { kind: "organ", label: "器官", color: "#b5ff42", w: 88, h: 88, damage: 16 },
+  { kind: "vessel", label: "血管", color: "#ff4b45", w: 190, h: 34, damage: 18, lane: "any" },
+  { kind: "nerve", label: "神經", color: "#ffd84a", w: 54, h: 145, damage: 24, lane: "top" },
+  { kind: "organ", label: "器官", color: "#b5ff42", w: 88, h: 88, damage: 16, lane: "low" },
+  { kind: "chest", label: "胸腔", color: "#ff7f9d", w: 112, h: 100, damage: 20, lane: "mid" },
+  { kind: "bone", label: "骨頭", color: "#a9f5ff", w: 160, h: 70, damage: 22, lane: "low" },
+  { kind: "gut", label: "腸胃", color: "#ff9c5b", w: 150, h: 96, damage: 18, lane: "low" },
 ];
 
 function resetGame() {
@@ -82,8 +88,13 @@ function resetGame() {
 function seedOpeningPattern() {
   obstacles.push(makeObstacle("vessel", 760, 505, -0.12));
   obstacles.push(makeObstacle("nerve", 1080, 150, 0));
+  obstacles.push(makeObstacle("bone", 1580, 520, 0.02));
+  obstacles.push(makeObstacle("chest", 1970, 255, 0));
+  obstacles.push(makeObstacle("gut", 2300, 468, -0.06));
   tumors.push(makeTumor(1340, 456));
+  tumors.push(makeTumor(2600, 330));
   pickups.push({ x: 620, y: 350, r: 14, taken: false });
+  pickups.push({ x: 1840, y: 210, r: 14, taken: false });
 }
 
 function loadSprites(paths) {
@@ -165,8 +176,12 @@ function resumeGame() {
 function spawnObstacle() {
   const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
   const topLane = 110 + Math.random() * 150;
+  const midLane = 245 + Math.random() * 120;
   const lowLane = groundY - 70 - Math.random() * 140;
-  const y = type.kind === "nerve" ? topLane : lowLane;
+  let y = lowLane;
+  if (type.lane === "top") y = topLane;
+  if (type.lane === "mid") y = midLane;
+  if (type.lane === "any") y = Math.random() > 0.44 ? lowLane : topLane + 120;
   const angle = type.kind === "vessel" ? (Math.random() - 0.5) * 0.65 : 0;
   obstacles.push(makeObstacle(type.kind, canvas.width + 100, y, angle));
 }
@@ -286,7 +301,7 @@ function update() {
 
   if (safety <= 0 || energy <= 0) {
     state = "dead";
-    showOverlay("YOU DIED!", "碰到正常組織。重新規劃治療路徑，再挑戰一次。", "Space / Click / Tap RETRY");
+    showOverlay("YOU DIED!", "不能碰正常組織：血管、神經、器官、胸腔、骨頭、腸胃都會扣安全率。", "Space / Click / Tap RETRY");
   } else if (distance >= levelLength || hits >= 6) {
     state = "complete";
     showOverlay("LEVEL COMPLETE!", `腫瘤命中 ${hits} 次，正常組織安全率 ${Math.round(safety)}%。`, "Space / Click / Tap NEXT LEVEL", "complete");
@@ -477,10 +492,44 @@ function drawOrgan(obstacle) {
   ctx.stroke();
 }
 
+function drawChest(obstacle) {
+  const pulse = 1 + Math.sin(obstacle.phase) * 0.04;
+  if (drawSprite("chest", obstacle.x - 35, obstacle.y - 42, 176 * pulse, 150 * pulse)) return;
+
+  ctx.fillStyle = obstacle.color;
+  ctx.beginPath();
+  ctx.ellipse(obstacle.x + 55, obstacle.y + 50, 58, 48, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawBone(obstacle) {
+  if (drawSprite("bone", obstacle.x - 38, obstacle.y - 40, obstacle.w + 94, obstacle.h + 72, obstacle.angle)) return;
+
+  ctx.fillStyle = obstacle.color;
+  ctx.beginPath();
+  ctx.roundRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h, 30);
+  ctx.fill();
+}
+
+function drawGut(obstacle) {
+  if (drawSprite("gut", obstacle.x - 36, obstacle.y - 44, obstacle.w + 80, obstacle.h + 74, obstacle.angle)) return;
+
+  ctx.strokeStyle = obstacle.color;
+  ctx.lineWidth = 34;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(obstacle.x, obstacle.y + 35);
+  ctx.bezierCurveTo(obstacle.x + 52, obstacle.y - 18, obstacle.x + 104, obstacle.y + 90, obstacle.x + 150, obstacle.y + 35);
+  ctx.stroke();
+}
+
 function drawObstacle(obstacle) {
   if (obstacle.kind === "vessel") drawVessel(obstacle);
   if (obstacle.kind === "nerve") drawNerve(obstacle);
   if (obstacle.kind === "organ") drawOrgan(obstacle);
+  if (obstacle.kind === "chest") drawChest(obstacle);
+  if (obstacle.kind === "bone") drawBone(obstacle);
+  if (obstacle.kind === "gut") drawGut(obstacle);
 
   ctx.fillStyle = "#f2fdff";
   ctx.font = "900 16px sans-serif";
@@ -564,6 +613,11 @@ function drawDecorations() {
   ctx.font = "900 18px sans-serif";
   ctx.textAlign = "left";
   ctx.fillText("治療路徑：避開正常組織  →  聚焦能量  →  命中腫瘤", 32, canvas.height - 34);
+  ctx.font = "900 16px sans-serif";
+  ctx.fillStyle = "rgba(143, 255, 41, 0.96)";
+  ctx.fillText("可碰：腫瘤 / 金色能量幣", 32, 86);
+  ctx.fillStyle = "rgba(255, 143, 133, 0.96)";
+  ctx.fillText("不可碰：血管 / 神經 / 器官 / 胸腔 / 骨頭 / 腸胃", 32, 112);
 }
 
 function draw() {
