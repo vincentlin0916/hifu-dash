@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 150">
+  <defs>
+    <linearGradient id="blood" x1="0" x2="1">
+      <stop offset="0" stop-color="#631117"/>
+      <stop offset=".22" stop-color="#d83935"/>
+      <stop offset=".52" stop-color="#ff7968"/>
+      <stop offset=".76" stop-color="#b51f27"/>
+      <stop offset="1" stop-color="#4c0a12"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-40%" width="140%" height="180%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#000" flood-opacity=".45"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#ff7060" flood-opacity=".45"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)" fill="none" stroke-linecap="round">
+    <path d="M19 103C88 41 151 54 208 75c62 23 119 28 193-47" stroke="#3c0710" stroke-width="70"/>
+    <path d="M19 103C88 41 151 54 208 75c62 23 119 28 193-47" stroke="url(#blood)" stroke-width="50"/>
+    <path d="M48 87C103 49 154 57 204 78c53 21 101 24 165-28" stroke="#ffa093" stroke-width="9" opacity=".7"/>
+    <path d="M245 83c22 5 42 20 57 42" stroke="#92202a" stroke-width="21"/>
+    <path d="M246 81c23 5 42 19 57 40" stroke="#e74b43" stroke-width="13"/>
+    <path d="M118 61c-16 20-32 35-55 43" stroke="#8e1e27" stroke-width="19"/>
+    <path d="M122 61c-16 18-33 31-56 39" stroke="#ef594c" stroke-width="11"/>
+  </g>
+</svg>

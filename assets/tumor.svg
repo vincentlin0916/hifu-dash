@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 230">
+  <defs>
+    <radialGradient id="tumor" cx="38%" cy="32%" r="70%">
+      <stop offset="0" stop-color="#fff8b9"/>
+      <stop offset=".22" stop-color="#f7d84d"/>
+      <stop offset=".5" stop-color="#d76b35"/>
+      <stop offset=".76" stop-color="#8f1d2f"/>
+      <stop offset="1" stop-color="#36101b"/>
+    </radialGradient>
+    <filter id="tumorGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="11" flood-color="#ff7b45" flood-opacity=".7"/>
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+  </defs>
+  <g filter="url(#tumorGlow)">
+    <path d="M126 12c15 21 26 28 51 21 1 26 10 38 35 45-15 21-16 36 0 57-24 8-33 20-33 46-25-7-39-1-53 21-15-22-29-28-54-21 0-26-9-38-34-46 15-20 15-36 0-57 25-7 34-19 34-45 25 7 39 0 54-21Z" fill="url(#tumor)" stroke="#ffef9b" stroke-width="6"/>
+    <circle cx="94" cy="82" r="15" fill="#fff09a" opacity=".7"/>
+    <circle cx="145" cy="105" r="12" fill="#fb5c48" opacity=".62"/>
+    <circle cx="118" cy="146" r="18" fill="#7e172b" opacity=".42"/>
+    <path d="M67 122c30-22 78-31 121 4" fill="none" stroke="#ffd47a" stroke-width="6" stroke-linecap="round" opacity=".42"/>
+  </g>
+</svg>

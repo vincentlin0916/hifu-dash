@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <radialGradient id="coin" cx="35%" cy="25%" r="70%">
+      <stop offset="0" stop-color="#fff8b7"/>
+      <stop offset=".35" stop-color="#ffe047"/>
+      <stop offset=".72" stop-color="#e69a09"/>
+      <stop offset="1" stop-color="#7d4700"/>
+    </radialGradient>
+    <filter id="coinGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#ffd84a" flood-opacity=".8"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="60" r="48" fill="url(#coin)" stroke="#fff3a2" stroke-width="6" filter="url(#coinGlow)"/>
+  <circle cx="60" cy="60" r="33" fill="none" stroke="#9d6100" stroke-width="5" opacity=".45"/>
+  <path d="M60 30v60M43 47c8-12 33-12 34 3 1 17-35 11-34 28 1 15 27 16 36 2" fill="none" stroke="#744100" stroke-width="8" stroke-linecap="round"/>
+</svg>

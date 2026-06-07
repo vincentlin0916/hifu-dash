@@ -16,7 +16,17 @@ const ui = {
   coins: document.querySelector("#coins"),
 };
 
-const levelLength = 1800;
+const sprites = loadSprites({
+  focus: "assets/focus-orb.svg",
+  vessel: "assets/vessel.svg",
+  nerve: "assets/nerve.svg",
+  organ: "assets/organ.svg",
+  tumor: "assets/tumor.svg",
+  coin: "assets/coin.svg",
+  poster: "assets/level-poster.svg",
+});
+
+const levelLength = 1500;
 const groundY = 602;
 const focus = {
   x: 178,
@@ -76,6 +86,28 @@ function seedOpeningPattern() {
   pickups.push({ x: 620, y: 350, r: 14, taken: false });
 }
 
+function loadSprites(paths) {
+  return Object.fromEntries(
+    Object.entries(paths).map(([name, src]) => {
+      const image = new Image();
+      image.src = src;
+      return [name, image];
+    }),
+  );
+}
+
+function drawSprite(name, x, y, w, h, rotation = 0, alpha = 1) {
+  const image = sprites[name];
+  if (!image || !image.complete || image.naturalWidth === 0) return false;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x + w / 2, y + h / 2);
+  ctx.rotate(rotation);
+  ctx.drawImage(image, -w / 2, -h / 2, w, h);
+  ctx.restore();
+  return true;
+}
+
 function makeObstacle(kind, x, y, angle = 0) {
   const type = obstacleTypes.find((item) => item.kind === kind);
   return {
@@ -119,7 +151,7 @@ function jump() {
 function togglePause() {
   if (state === "playing") {
     state = "paused";
-    showOverlay("PAUSED", "RESUME / RETRY / LEVEL SELECT", "Space / Click 繼續，P 取消暫停", "menu");
+    showOverlay("PAUSED", "RESUME / RETRY", "Space / Click 繼續，P 取消暫停", "menu");
   } else if (state === "paused") {
     resumeGame();
   }
@@ -255,7 +287,7 @@ function update() {
   if (safety <= 0 || energy <= 0) {
     state = "dead";
     showOverlay("YOU DIED!", "碰到正常組織。重新規劃治療路徑，再挑戰一次。", "Space / Click / Tap RETRY");
-  } else if (distance >= levelLength || hits >= 8) {
+  } else if (distance >= levelLength || hits >= 6) {
     state = "complete";
     showOverlay("LEVEL COMPLETE!", `腫瘤命中 ${hits} 次，正常組織安全率 ${Math.round(safety)}%。`, "Space / Click / Tap NEXT LEVEL", "complete");
   }
@@ -288,6 +320,11 @@ function drawBackground() {
   bg.addColorStop(1, "#031016");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (drawSprite("poster", canvas.width - 520 - ((frame * speed * 0.08) % 120), 96, 500, 300, 0, 0.16)) {
+    ctx.fillStyle = "rgba(2, 16, 25, 0.48)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
 
   ctx.globalAlpha = 0.26;
   for (let i = 0; i < 70; i += 1) {
@@ -362,16 +399,20 @@ function drawFocus() {
   ctx.arc(focus.x, focus.y, 92, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = "#f2fdff";
-  ctx.strokeStyle = "#5afcff";
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.arc(focus.x, focus.y, focus.radius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
+  if (!drawSprite("focus", focus.x - 58, focus.y - 58, 116, 116)) {
+    ctx.fillStyle = "#f2fdff";
+    ctx.strokeStyle = "#5afcff";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(focus.x, focus.y, focus.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
 }
 
 function drawVessel(obstacle) {
+  if (drawSprite("vessel", obstacle.x - 38, obstacle.y - 58, obstacle.w + 96, obstacle.h + 98, obstacle.angle)) return;
+
   ctx.save();
   ctx.translate(obstacle.x + obstacle.w / 2, obstacle.y + obstacle.h / 2);
   ctx.rotate(obstacle.angle);
@@ -392,6 +433,8 @@ function drawVessel(obstacle) {
 }
 
 function drawNerve(obstacle) {
+  if (drawSprite("nerve", obstacle.x - 14, obstacle.y - 18, obstacle.w + 44, obstacle.h + 42)) return;
+
   ctx.fillStyle = obstacle.color;
   ctx.strokeStyle = "#fff3a6";
   ctx.lineWidth = 3;
@@ -410,6 +453,8 @@ function drawNerve(obstacle) {
 
 function drawOrgan(obstacle) {
   const pulse = 1 + Math.sin(obstacle.phase) * 0.08;
+  if (drawSprite("organ", obstacle.x - 38, obstacle.y - 42, 164 * pulse, 150 * pulse)) return;
+
   ctx.fillStyle = "rgba(143, 255, 41, 0.18)";
   ctx.beginPath();
   ctx.arc(obstacle.x + 44, obstacle.y + 44, 70 * pulse, 0, Math.PI * 2);
@@ -446,6 +491,14 @@ function drawObstacle(obstacle) {
 function drawTumor(tumor) {
   if (tumor.hit) return;
   const pulse = 1 + Math.sin(tumor.pulse) * 0.09;
+  if (drawSprite("tumor", tumor.x - tumor.r * 1.85 * pulse, tumor.y - tumor.r * 1.7 * pulse, tumor.r * 3.7 * pulse, tumor.r * 3.4 * pulse)) {
+    ctx.fillStyle = "#f2fdff";
+    ctx.font = "900 15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("腫瘤", tumor.x, tumor.y + tumor.r + 26);
+    return;
+  }
+
   ctx.fillStyle = "rgba(143, 255, 41, 0.2)";
   ctx.beginPath();
   ctx.arc(tumor.x, tumor.y, tumor.r * 2.1 * pulse, 0, Math.PI * 2);
@@ -473,6 +526,8 @@ function drawTumor(tumor) {
 }
 
 function drawPickup(pickup) {
+  if (drawSprite("coin", pickup.x - 25, pickup.y - 25, 50, 50)) return;
+
   ctx.fillStyle = "#ffd84a";
   ctx.strokeStyle = "#fff5a8";
   ctx.lineWidth = 3;
@@ -542,15 +597,6 @@ window.addEventListener("keydown", (event) => {
     jump();
   }
   if (event.code === "KeyP") togglePause();
-});
-
-document.querySelectorAll(".level-card").forEach((button) => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".level-card").forEach((item) => item.classList.remove("active"));
-    button.classList.add("active");
-    attempt = 1;
-    resetGame();
-  });
 });
 
 if (!CanvasRenderingContext2D.prototype.roundRect) {

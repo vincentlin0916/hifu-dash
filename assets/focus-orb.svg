@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+  <defs>
+    <radialGradient id="orb" cx="47%" cy="43%" r="58%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".2" stop-color="#aefcff"/>
+      <stop offset=".46" stop-color="#3eefff"/>
+      <stop offset=".76" stop-color="#1578ff"/>
+      <stop offset="1" stop-color="#06234d" stop-opacity=".1"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#76ffff" stop-opacity=".9"/>
+      <stop offset=".5" stop-color="#20ddff" stop-opacity=".32"/>
+      <stop offset="1" stop-color="#20ddff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+  <circle cx="110" cy="110" r="104" fill="url(#glow)" filter="url(#blur)"/>
+  <circle cx="110" cy="110" r="52" fill="url(#orb)" stroke="#dfffff" stroke-width="5"/>
+  <circle cx="91" cy="88" r="15" fill="#fff" opacity=".9"/>
+  <circle cx="129" cy="128" r="7" fill="#0b7dff" opacity=".45"/>
+  <path d="M19 110h182M110 19v182" stroke="#b9ffff" stroke-width="4" stroke-linecap="round" opacity=".58"/>
+  <path d="M48 172C76 198 145 199 174 151" fill="none" stroke="#75ffff" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+</svg>
