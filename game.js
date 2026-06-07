@@ -30,7 +30,8 @@ const sprites = loadSprites({
   poster: "assets/level-poster.svg",
 });
 
-const levelLength = 1900;
+// Calibrated for roughly one minute at the current scrolling acceleration.
+const levelLength = 1600;
 const groundY = 602;
 const focus = {
   x: 178,
@@ -320,7 +321,7 @@ function update() {
   frame += 1;
   speed += 0.0009;
   distance += speed / 14;
-  energy = Math.min(100, energy + 0.025);
+  energy = Math.min(100, energy + 0.04);
   focus.vy += 0.68;
   focus.y += focus.vy;
 
@@ -407,7 +408,7 @@ function update() {
   if (safety <= 0 || energy <= 0) {
     state = "dead";
     showOverlay("YOU DIED!", "不能碰血管、神經、器官、胸腔或腸胃。重新規劃路徑再試一次。", "Space / Click / Tap RETRY");
-  } else if (distance >= levelLength || hits >= 4 || painLevel <= 0) {
+  } else if (distance >= levelLength) {
     state = "complete";
     showOverlay("LEVEL COMPLETE!", `腫瘤命中 ${hits} 次，骨痛等級降到 ${painLevel}/10，安全率 ${Math.round(safety)}%。`, "Space / Click / Tap NEXT LEVEL", "complete");
   }
