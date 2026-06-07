@@ -53,7 +53,6 @@ let ablationMessage = null;
 let painReliefMessage = null;
 let energy = 100;
 let safety = 100;
-let heat = 0;
 let painLevel = 10;
 let painTreatments = 0;
 let hits = 0;
@@ -61,7 +60,6 @@ let coins = 0;
 let distance = 0;
 let obstacles = [];
 let tumors = [];
-let painSpots = [];
 let pickups = [];
 let particles = [];
 
@@ -70,7 +68,7 @@ const obstacleTypes = [
   { kind: "nerve", label: "神經", color: "#ffd84a", w: 54, h: 145, damage: 24, lane: "top" },
   { kind: "organ", label: "器官", color: "#b5ff42", w: 88, h: 88, damage: 16, lane: "low" },
   { kind: "chest", label: "胸腔", color: "#ff7f9d", w: 112, h: 100, damage: 20, lane: "mid" },
-  { kind: "bone", label: "骨頭", color: "#a9f5ff", w: 160, h: 70, damage: 22, lane: "low" },
+  { kind: "bone", label: "骨痛", color: "#a9f5ff", w: 160, h: 70, damage: 0, lane: "low" },
   { kind: "gut", label: "腸胃", color: "#ff9c5b", w: 150, h: 96, damage: 18, lane: "low" },
 ];
 
@@ -80,7 +78,6 @@ function resetGame() {
   speed = 4.6;
   energy = Math.round(58 + chargeLevel * 42);
   safety = 100;
-  heat = 0;
   painLevel = 10;
   painTreatments = 0;
   hits = 0;
@@ -91,7 +88,6 @@ function resetGame() {
   focus.trail = [];
   obstacles = [];
   tumors = [];
-  painSpots = [];
   pickups = [];
   particles = [];
   overlay.className = "overlay hidden";
@@ -111,7 +107,6 @@ function startCountdown() {
   isCharging = false;
   energy = 58;
   safety = 100;
-  heat = 0;
   painLevel = 10;
   painTreatments = 0;
   hits = 0;
@@ -122,7 +117,6 @@ function startCountdown() {
   focus.trail = [];
   obstacles = [];
   tumors = [];
-  painSpots = [];
   pickups = [];
   particles = [];
   overlay.className = "overlay hidden";
@@ -160,7 +154,6 @@ function seedOpeningPattern() {
   obstacles.push(makeObstacle("gut", 2920, 468, -0.06));
   tumors.push(makeTumor(1460, 456));
   tumors.push(makeTumor(3280, 330));
-  painSpots.push(makePainSpot(firstBone, 0.48, 0.5, 100, 18));
   pickups.push({ x: 620, y: 350, r: 14, taken: false });
   pickups.push({ x: 2180, y: 210, r: 14, taken: false });
 }
@@ -206,34 +199,6 @@ function makeTumor(x, y) {
     pulse: Math.random() * Math.PI,
     hit: false,
   };
-}
-
-function makePainSpot(bone, offsetXRatio = 0.5, offsetYRatio = 0.5, rx = 96, ry = 18) {
-  const anchor = bonePainAnchor(bone, offsetXRatio, offsetYRatio);
-  return {
-    bone,
-    offsetXRatio,
-    offsetYRatio,
-    x: anchor.x,
-    y: anchor.y,
-    rx,
-    ry,
-    r: Math.max(rx, ry),
-    progress: 0,
-    pulse: Math.random() * Math.PI,
-    treated: false,
-    overheated: false,
-  };
-}
-
-function bonePainAnchor(bone, offsetXRatio, offsetYRatio) {
-  const visibleX = bone.x - 12;
-  const visibleY = bone.y - 18;
-  const visibleW = bone.w + 48;
-  const visibleH = bone.h + 34;
-  const x = visibleX + visibleW * Math.max(0.28, Math.min(0.72, offsetXRatio));
-  const y = visibleY + visibleH * Math.max(0.4, Math.min(0.62, offsetYRatio));
-  return { x, y };
 }
 
 function jump() {
@@ -288,9 +253,6 @@ function spawnObstacle() {
   const angle = type.kind === "vessel" ? (Math.random() - 0.5) * 0.65 : 0;
   const obstacle = makeObstacle(type.kind, canvas.width + 100, y, angle);
   obstacles.push(obstacle);
-  if (type.kind === "bone" && Math.random() > 0.2) {
-    painSpots.push(makePainSpot(obstacle, 0.5 + (Math.random() - 0.5) * 0.12, 0.5 + (Math.random() - 0.5) * 0.08, 88 + Math.random() * 24, 16 + Math.random() * 5));
-  }
 }
 
 function spawnTumor() {
@@ -300,7 +262,6 @@ function spawnTumor() {
 function spawnPainSpot() {
   const bone = makeObstacle("bone", canvas.width + 240, groundY - 92 - Math.random() * 58, (Math.random() - 0.5) * 0.08);
   obstacles.push(bone);
-  painSpots.push(makePainSpot(bone, 0.5, 0.5, 98 + Math.random() * 24, 16 + Math.random() * 5));
 }
 
 function spawnPickup() {
@@ -391,8 +352,12 @@ function update() {
       h: obstacle.h,
     };
     if (!obstacle.hit && circleRect(focus, hitbox)) {
-      obstacle.hit = true;
-      damagePlayer(obstacle.damage, obstacle.color);
+      if (obstacle.kind === "bone") {
+        treatBonePain(obstacle);
+      } else {
+        obstacle.hit = true;
+        damagePlayer(obstacle.damage, obstacle.color);
+      }
     }
   });
 
@@ -407,47 +372,6 @@ function update() {
       addBurst(tumor.x, tumor.y, "#8fff29", 42, 11);
     }
   });
-
-  let treatingPain = false;
-  painSpots.forEach((spot) => {
-    const anchor = bonePainAnchor(spot.bone, spot.offsetXRatio, spot.offsetYRatio);
-    spot.x = anchor.x;
-    spot.y = anchor.y;
-    spot.pulse += 0.11;
-    if (spot.treated || spot.bone.hit) return;
-
-    const dx = (focus.x - spot.x) / (spot.rx + focus.radius);
-    const dy = (focus.y - spot.y) / (spot.ry + focus.radius);
-    const inTherapyZone = dx * dx + dy * dy < 1;
-    if (inTherapyZone) {
-      treatingPain = true;
-      spot.progress = Math.min(100, spot.progress + 2.1 + chargeLevel * 0.45);
-      heat = Math.min(120, heat + 0.78 + chargeLevel * 0.22);
-      energy = Math.max(0, energy - 0.055);
-      if (frame % 7 === 0) addBurst(spot.x, spot.y, "#ff9c5b", 5, 4);
-    } else {
-      spot.progress = Math.max(0, spot.progress - 0.08);
-    }
-
-    if (spot.progress >= 100) {
-      spot.treated = true;
-      painTreatments += 1;
-      painLevel = Math.max(0, painLevel - 4);
-      heat = Math.max(0, heat - 24);
-      painReliefMessage = { x: spot.x, y: spot.y, life: 95 };
-      addBurst(spot.x, spot.y, "#ffd84a", 34, 9);
-    }
-  });
-
-  if (!treatingPain) {
-    heat = Math.max(0, heat - 0.78);
-  }
-
-  if (heat >= 104 && frame % 28 === 0) {
-    safety = Math.max(0, safety - 3);
-    heat = Math.max(76, heat - 18);
-    addBurst(focus.x, focus.y, "#ff4b45", 16, 7);
-  }
 
   pickups.forEach((pickup) => {
     pickup.x -= speed;
@@ -477,19 +401,29 @@ function update() {
 
   obstacles = obstacles.filter((obstacle) => obstacle.x > -260);
   tumors = tumors.filter((tumor) => tumor.x > -140 && !tumor.hit);
-  painSpots = painSpots.filter((spot) => spot.x > -180 && !spot.treated && obstacles.includes(spot.bone));
   pickups = pickups.filter((pickup) => pickup.x > -80 && !pickup.taken);
   particles = particles.filter((particle) => particle.life > 0);
 
   if (safety <= 0 || energy <= 0) {
     state = "dead";
-    showOverlay("YOU DIED!", "不能碰正常組織，也不能讓骨痛治療過熱。重新規劃路徑再試一次。", "Space / Click / Tap RETRY");
+    showOverlay("YOU DIED!", "不能碰血管、神經、器官、胸腔或腸胃。重新規劃路徑再試一次。", "Space / Click / Tap RETRY");
   } else if (distance >= levelLength || hits >= 4 || painLevel <= 0) {
     state = "complete";
     showOverlay("LEVEL COMPLETE!", `腫瘤命中 ${hits} 次，骨痛等級降到 ${painLevel}/10，安全率 ${Math.round(safety)}%。`, "Space / Click / Tap NEXT LEVEL", "complete");
   }
 
   updateUi();
+}
+
+function treatBonePain(bone) {
+  if (bone.treated) return;
+  bone.treated = true;
+  bone.hit = false;
+  painTreatments += 1;
+  painLevel = Math.max(0, painLevel - 4);
+  energy = Math.min(100, energy + 8);
+  painReliefMessage = { x: bone.x + bone.w / 2, y: bone.y + bone.h / 2, life: 95 };
+  addBurst(bone.x + bone.w / 2, bone.y + bone.h / 2, "#ffd84a", 38, 9);
 }
 
 function updateCountdown() {
@@ -867,12 +801,42 @@ function drawChest(obstacle) {
 }
 
 function drawBone(obstacle) {
-  if (drawSprite("bone", obstacle.x - 38, obstacle.y - 40, obstacle.w + 94, obstacle.h + 72, obstacle.angle)) return;
+  if (drawSprite("bone", obstacle.x - 38, obstacle.y - 40, obstacle.w + 94, obstacle.h + 72, obstacle.angle, obstacle.treated ? 0.45 : 1)) {
+    if (obstacle.treated) drawTreatedBoneOverlay(obstacle);
+    return;
+  }
 
-  ctx.fillStyle = obstacle.color;
+  ctx.fillStyle = obstacle.treated ? "#8fff29" : obstacle.color;
   ctx.beginPath();
   ctx.roundRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h, 30);
   ctx.fill();
+  if (obstacle.treated) drawTreatedBoneOverlay(obstacle);
+}
+
+function drawTreatedBoneOverlay(obstacle) {
+  const cx = obstacle.x + obstacle.w / 2;
+  const cy = obstacle.y + obstacle.h / 2;
+  const glow = ctx.createRadialGradient(cx, cy, 4, cx, cy, 130);
+  glow.addColorStop(0, "rgba(143, 255, 41, 0.75)");
+  glow.addColorStop(0.45, "rgba(255, 216, 74, 0.35)");
+  glow.addColorStop(1, "rgba(143, 255, 41, 0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 130, 78, obstacle.angle, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(143, 255, 41, 0.95)";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(cx - 42, cy);
+  ctx.lineTo(cx - 12, cy + 28);
+  ctx.lineTo(cx + 52, cy - 34);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(242, 253, 255, 0.96)";
+  ctx.font = "900 14px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("PAIN RELIEF", cx, cy - 54);
 }
 
 function drawGut(obstacle) {
@@ -899,60 +863,6 @@ function drawObstacle(obstacle) {
   ctx.font = "900 16px sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(obstacle.label, obstacle.x + obstacle.w / 2, obstacle.y - 12);
-}
-
-function drawPainSpot(spot) {
-  if (spot.treated) return;
-  const pulse = 1 + Math.sin(spot.pulse) * 0.12;
-  const rx = spot.rx * pulse;
-  const ry = spot.ry * pulse;
-  const remainingRatio = 1 - spot.progress / 100;
-  const remainingWidth = rx * 2 * remainingRatio;
-  const remainingCenter = spot.x + rx * (spot.progress / 100);
-
-  const glow = ctx.createRadialGradient(spot.x, spot.y, 4, spot.x, spot.y, rx * 1.45);
-  glow.addColorStop(0, "rgba(255, 238, 122, 0.9)");
-  glow.addColorStop(0.35, "rgba(255, 120, 68, 0.42)");
-  glow.addColorStop(1, "rgba(255, 75, 69, 0)");
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.ellipse(remainingCenter, spot.y, Math.max(2, remainingWidth * 0.85), ry * 2.2, -0.08, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.save();
-  ctx.globalAlpha = 0.42;
-  ctx.fillStyle = "rgba(120, 255, 255, 0.55)";
-  ctx.beginPath();
-  ctx.ellipse(spot.x - rx * 0.55 + rx * spot.progress / 100, spot.y, rx * spot.progress / 100, ry * 0.72, -0.08, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.fillStyle = "rgba(255, 112, 72, 0.9)";
-  ctx.strokeStyle = "#fff1a8";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.ellipse(remainingCenter, spot.y, Math.max(2, remainingWidth / 2), ry, -0.08, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.strokeStyle = "rgba(255, 241, 168, 0.55)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(remainingCenter - remainingWidth * 0.36, spot.y);
-  ctx.bezierCurveTo(remainingCenter - remainingWidth * 0.12, spot.y - ry * 0.62, remainingCenter + remainingWidth * 0.12, spot.y + ry * 0.62, remainingCenter + remainingWidth * 0.36, spot.y);
-  ctx.stroke();
-
-  ctx.fillStyle = "rgba(3, 16, 22, 0.72)";
-  ctx.fillRect(spot.x - 68, spot.y + ry + 18, 136, 12);
-  ctx.fillStyle = heat > 82 ? "#ff4b45" : "#8fff29";
-  ctx.fillRect(spot.x - 68, spot.y + ry + 18, 136 * (spot.progress / 100), 12);
-  ctx.strokeStyle = "rgba(242, 253, 255, 0.72)";
-  ctx.strokeRect(spot.x - 68, spot.y + ry + 18, 136, 12);
-
-  ctx.fillStyle = "#f2fdff";
-  ctx.font = "900 14px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("Bone Pain Zone", spot.x, spot.y - ry - 16);
 }
 
 function drawTumor(tumor) {
@@ -1064,14 +974,14 @@ function drawDecorations() {
   ctx.fillStyle = "rgba(242, 253, 255, 0.82)";
   ctx.font = "900 18px sans-serif";
   ctx.textAlign = "left";
-  ctx.fillText("治療路徑：避開正常組織  →  命中腫瘤 / 穩定消融骨痛點", 32, canvas.height - 34);
+  ctx.fillText("治療路徑：避開正常組織  →  腫瘤消失 / 骨頭變色止痛", 32, canvas.height - 34);
   ctx.font = "900 16px sans-serif";
   ctx.fillStyle = "rgba(143, 255, 41, 0.96)";
-  ctx.fillText("可碰：腫瘤 / 骨痛點 / 金色能量幣", 32, 86);
+  ctx.fillText("可碰：腫瘤 / 骨頭疼痛區 / 金色能量幣", 32, 86);
   ctx.fillStyle = "rgba(255, 143, 133, 0.96)";
-  ctx.fillText("不可碰：血管 / 神經 / 器官 / 胸腔 / 骨頭 / 腸胃", 32, 112);
-  ctx.fillStyle = heat > 82 ? "rgba(255, 75, 69, 0.98)" : "rgba(255, 216, 74, 0.96)";
-  ctx.fillText(`骨痛 ${painLevel}/10   熱量 ${Math.round(heat)}%`, 32, 138);
+  ctx.fillText("不可碰：血管 / 神經 / 器官 / 胸腔 / 腸胃", 32, 112);
+  ctx.fillStyle = "rgba(255, 216, 74, 0.96)";
+  ctx.fillText(`骨痛 ${painLevel}/10   骨頭變綠 = 治療完成`, 32, 138);
 }
 
 function draw() {
@@ -1095,7 +1005,6 @@ function draw() {
   drawTissueFloor();
   drawDecorations();
   tumors.forEach(drawTumor);
-  painSpots.forEach(drawPainSpot);
   pickups.forEach(drawPickup);
   obstacles.forEach(drawObstacle);
   drawParticles();
