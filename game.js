@@ -630,6 +630,128 @@ function drawEnergyRings(x, y, radius, intensity) {
   ctx.restore();
 }
 
+function drawCircularProbe(x, y, radius, intensity) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  const outerGlow = ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius * 1.8);
+  outerGlow.addColorStop(0, `rgba(90, 252, 255, ${0.18 + intensity * 0.18})`);
+  outerGlow.addColorStop(0.48, "rgba(90, 252, 255, 0.08)");
+  outerGlow.addColorStop(1, "rgba(90, 252, 255, 0)");
+  ctx.fillStyle = outerGlow;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius * 1.85, 0, Math.PI * 2);
+  ctx.fill();
+
+  for (let i = 0; i < 3; i += 1) {
+    ctx.strokeStyle = `rgba(90, 252, 255, ${0.28 - i * 0.06 + intensity * 0.12})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius + i * 22 + Math.sin(frame * 0.06 + i) * 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  const body = ctx.createRadialGradient(-radius * 0.34, -radius * 0.34, 8, 0, 0, radius);
+  body.addColorStop(0, "#eaffff");
+  body.addColorStop(0.32, "#62ecff");
+  body.addColorStop(0.68, "#126c88");
+  body.addColorStop(1, "#061927");
+  ctx.fillStyle = body;
+  ctx.strokeStyle = "rgba(213, 255, 255, 0.95)";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  const aperture = ctx.createLinearGradient(-radius, 0, radius, 0);
+  aperture.addColorStop(0, "rgba(242, 253, 255, 0.18)");
+  aperture.addColorStop(0.5, "rgba(153, 255, 255, 0.86)");
+  aperture.addColorStop(1, "rgba(242, 253, 255, 0.18)");
+  ctx.strokeStyle = aperture;
+  ctx.lineWidth = 12 + intensity * 8;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(radius * 0.42, -radius * 0.72);
+  ctx.quadraticCurveTo(radius * 0.9, 0, radius * 0.42, radius * 0.72);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(242, 253, 255, 0.86)";
+  ctx.beginPath();
+  ctx.arc(-radius * 0.32, -radius * 0.38, radius * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(5, 24, 34, 0.86)";
+  ctx.font = "900 15px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("HIFU", -radius * 0.05, radius * 0.12);
+  ctx.restore();
+}
+
+function drawConeBeam(startX, startY, endX, endY, intensity, progress = 1) {
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const distanceToTarget = Math.hypot(dx, dy) || 1;
+  const ux = dx / distanceToTarget;
+  const uy = dy / distanceToTarget;
+  const nx = -uy;
+  const ny = ux;
+  const activeDistance = distanceToTarget * Math.max(0.18, Math.min(1, progress));
+  const focusX = startX + ux * activeDistance;
+  const focusY = startY + uy * activeDistance;
+  const baseWidth = 190 + intensity * 95;
+  const baseTopX = startX + nx * baseWidth * 0.5;
+  const baseTopY = startY + ny * baseWidth * 0.5;
+  const baseBottomX = startX - nx * baseWidth * 0.5;
+  const baseBottomY = startY - ny * baseWidth * 0.5;
+
+  ctx.save();
+  const cone = ctx.createLinearGradient(startX, startY, focusX, focusY);
+  cone.addColorStop(0, `rgba(90, 252, 255, ${0.22 + intensity * 0.18})`);
+  cone.addColorStop(0.68, "rgba(90, 252, 255, 0.12)");
+  cone.addColorStop(1, `rgba(143, 255, 41, ${0.36 + intensity * 0.18})`);
+  ctx.fillStyle = cone;
+  ctx.beginPath();
+  ctx.moveTo(baseTopX, baseTopY);
+  ctx.lineTo(focusX, focusY);
+  ctx.lineTo(baseBottomX, baseBottomY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = `rgba(185, 255, 255, ${0.4 + intensity * 0.24})`;
+  ctx.lineWidth = 3 + intensity * 4;
+  ctx.beginPath();
+  ctx.moveTo(baseTopX, baseTopY);
+  ctx.lineTo(focusX, focusY);
+  ctx.lineTo(baseBottomX, baseBottomY);
+  ctx.stroke();
+
+  ctx.lineCap = "round";
+  for (let i = 0; i < 8; i += 1) {
+    const t = (i + 1) / 9;
+    const waveCenterX = startX + ux * activeDistance * t;
+    const waveCenterY = startY + uy * activeDistance * t;
+    const waveWidth = baseWidth * (1 - t) * (0.42 + intensity * 0.18);
+    const phase = Math.sin(frame * 0.14 + i * 0.8) * 7;
+    ctx.strokeStyle = `rgba(242, 253, 255, ${0.1 + intensity * 0.08})`;
+    ctx.lineWidth = 2 + intensity * 2;
+    ctx.beginPath();
+    ctx.moveTo(waveCenterX + nx * waveWidth * 0.5 + ux * phase, waveCenterY + ny * waveWidth * 0.5 + uy * phase);
+    ctx.lineTo(waveCenterX - nx * waveWidth * 0.5 + ux * phase, waveCenterY - ny * waveWidth * 0.5 + uy * phase);
+    ctx.stroke();
+  }
+
+  const focusGlow = ctx.createRadialGradient(focusX, focusY, 4, focusX, focusY, 76 + intensity * 28);
+  focusGlow.addColorStop(0, "rgba(255, 255, 255, 0.98)");
+  focusGlow.addColorStop(0.24, "rgba(143, 255, 41, 0.62)");
+  focusGlow.addColorStop(1, "rgba(143, 255, 41, 0)");
+  ctx.fillStyle = focusGlow;
+  ctx.beginPath();
+  ctx.arc(focusX, focusY, 76 + intensity * 28, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawFocusingBeam(startX, startY, endX, endY, intensity, phase = 0) {
   ctx.save();
   ctx.lineCap = "round";
@@ -667,14 +789,16 @@ function drawLaunchScene() {
   const launchProgress = Math.min(1, launchFrame / 82);
   const targetX = 870;
   const targetY = 360;
-  const startX = 242;
-  const startY = 390 + Math.sin(launchFrame * 0.08) * 6;
+  const probeX = 190;
+  const probeY = 386;
+  const startX = probeX + 70;
+  const startY = probeY;
   const orbX = startX + easeOutCubic(launchProgress) * (targetX - startX);
   const orbY = startY + easeOutCubic(launchProgress) * (targetY - startY) - Math.sin(launchProgress * Math.PI) * (38 + chargeLevel * 28);
 
-  drawEnergyRings(178, 386, 76, chargeLevel);
-  drawSprite("transducer", 38, 278, 270, 186);
-  drawFocusingBeam(startX, startY, orbX, orbY, chargeLevel, launchFrame * 0.05);
+  drawEnergyRings(probeX, probeY, 76, chargeLevel);
+  drawConeBeam(startX, startY, targetX, targetY, chargeLevel, launchProgress);
+  drawCircularProbe(probeX, probeY, 78, chargeLevel);
   drawTargetLock(targetX, targetY, 72, launchProgress);
   drawSprite("tumor", targetX - 62, targetY - 58, 124, 116);
 
@@ -702,9 +826,12 @@ function drawCountdownScene() {
   const progress = Math.min(1, countdownFrame / 120);
   const targetX = 872;
   const targetY = 356;
+  const probeX = 190;
+  const probeY = 386;
 
-  drawEnergyRings(172, 388, 58, progress);
-  drawSprite("transducer", 42, 286, 260, 178);
+  drawEnergyRings(probeX, probeY, 58, progress);
+  drawConeBeam(probeX + 70, probeY, targetX, targetY, 0.24 + progress * 0.28, 1);
+  drawCircularProbe(probeX, probeY, 76, 0.28 + progress * 0.28);
   drawTargetLock(targetX, targetY, 70, progress);
   drawSprite("tumor", targetX - 64, targetY - 58, 128, 118);
 
@@ -728,20 +855,18 @@ function drawChargingScene() {
   drawTissueFloor();
   const targetX = 872;
   const targetY = 356;
+  const probeX = 190;
+  const probeY = 386;
+  const beamIntensity = 0.24 + chargeLevel * 0.76;
 
-  drawEnergyRings(178, 390, 70, chargeLevel);
-  drawSprite("transducer", 38, 278, 270, 186);
+  drawEnergyRings(probeX, probeY, 70, beamIntensity);
+  drawConeBeam(probeX + 70, probeY, targetX, targetY, beamIntensity, 1);
+  drawCircularProbe(probeX, probeY, 78, beamIntensity);
   drawTargetLock(targetX, targetY, 72, chargeLevel);
   drawSprite("tumor", targetX - 63, targetY - 58, 126, 116);
   drawParticles();
 
-  const beamLength = 260 + chargeLevel * 390;
-  const beamY = 390 + Math.sin(frame * 0.1) * 8;
-  const previewEndX = Math.min(targetX - 86, 242 + beamLength);
-  const previewEndY = beamY - chargeLevel * 45;
-  drawFocusingBeam(242, beamY, previewEndX, previewEndY, chargeLevel, frame * 0.04);
-
-  drawSprite("focus", previewEndX - 45, previewEndY - 45, 90, 90);
+  drawSprite("focus", targetX - 45, targetY - 45, 90, 90, 0, 0.72 + chargeLevel * 0.28);
 
   const meterColor = chargeLevel > 0.78 ? "rgba(255, 216, 74, 0.95)" : "rgba(143, 255, 41, 0.95)";
   drawScannerPanel("按住充能，放開發射", "充能越高，焦點初始能量越高。看準節奏再放開。", chargeLevel, meterColor);
