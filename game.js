@@ -129,7 +129,7 @@ function startCountdown() {
 function startCharging() {
   state = "charging";
   launchFrame = 0;
-  chargeLevel = 0;
+  chargeLevel = 0.18;
   chargeDirection = 1;
   isCharging = false;
   energy = 58;
@@ -139,6 +139,7 @@ function startCharging() {
 function releaseUltrasound() {
   if (state !== "charging") return;
   isCharging = false;
+  chargeLevel = Math.max(chargeLevel, 0.18);
   state = "launching";
   launchFrame = 0;
   energy = Math.round(58 + chargeLevel * 42);
@@ -446,6 +447,8 @@ function updateCharging() {
       chargeLevel = 0.08;
       chargeDirection = 1;
     }
+  } else {
+    chargeLevel = 0.18 + Math.sin(frame * 0.045) * 0.025;
   }
   energy = Math.round(58 + chargeLevel * 42);
   if (frame % 10 === 0 && isCharging) {
@@ -662,14 +665,16 @@ function drawLaunchScene() {
   drawTissueFloor();
 
   const launchProgress = Math.min(1, launchFrame / 82);
-  const beamEnd = 280 + launchProgress * (420 + chargeLevel * 180);
-  const beamY = 390 + Math.sin(launchFrame * 0.08) * 10;
   const targetX = 870;
   const targetY = 360;
+  const startX = 242;
+  const startY = 390 + Math.sin(launchFrame * 0.08) * 6;
+  const orbX = startX + easeOutCubic(launchProgress) * (targetX - startX);
+  const orbY = startY + easeOutCubic(launchProgress) * (targetY - startY) - Math.sin(launchProgress * Math.PI) * (38 + chargeLevel * 28);
 
   drawEnergyRings(178, 386, 76, chargeLevel);
   drawSprite("transducer", 38, 278, 270, 186);
-  drawFocusingBeam(242, beamY, beamEnd, focus.y, chargeLevel, launchFrame * 0.05);
+  drawFocusingBeam(startX, startY, orbX, orbY, chargeLevel, launchFrame * 0.05);
   drawTargetLock(targetX, targetY, 72, launchProgress);
   drawSprite("tumor", targetX - 62, targetY - 58, 124, 116);
 
@@ -682,7 +687,7 @@ function drawLaunchScene() {
     ctx.stroke();
   }
 
-  drawSprite("focus", beamEnd - 58, focus.y - 58, 116, 116);
+  drawSprite("focus", orbX - 58, orbY - 58, 116, 116);
 
   drawScannerPanel("超音波發射中", `能量 ${Math.round(chargeLevel * 100)}% 已釋放，焦點進入治療路徑。`, launchProgress, "rgba(143, 255, 41, 0.92)");
   ctx.fillStyle = "rgba(143, 255, 41, 0.96)";
@@ -730,11 +735,13 @@ function drawChargingScene() {
   drawSprite("tumor", targetX - 63, targetY - 58, 126, 116);
   drawParticles();
 
-  const beamLength = 220 + chargeLevel * 450;
+  const beamLength = 260 + chargeLevel * 390;
   const beamY = 390 + Math.sin(frame * 0.1) * 8;
-  drawFocusingBeam(242, beamY, 242 + beamLength, beamY - chargeLevel * 45, chargeLevel, frame * 0.04);
+  const previewEndX = Math.min(targetX - 86, 242 + beamLength);
+  const previewEndY = beamY - chargeLevel * 45;
+  drawFocusingBeam(242, beamY, previewEndX, previewEndY, chargeLevel, frame * 0.04);
 
-  drawSprite("focus", 242 + beamLength - 45, beamY - chargeLevel * 45 - 45, 90, 90);
+  drawSprite("focus", previewEndX - 45, previewEndY - 45, 90, 90);
 
   const meterColor = chargeLevel > 0.78 ? "rgba(255, 216, 74, 0.95)" : "rgba(143, 255, 41, 0.95)";
   drawScannerPanel("按住充能，放開發射", "充能越高，焦點初始能量越高。看準節奏再放開。", chargeLevel, meterColor);
