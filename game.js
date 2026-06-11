@@ -265,6 +265,7 @@ function makeObstacle(kind, x, y, angle = 0) {
     y,
     angle,
     phase: Math.random() * Math.PI * 2,
+    scored: false,
   };
 }
 
@@ -368,6 +369,20 @@ function spawnPickup() {
   pickups.push({ x: canvas.width + 90, y: 315 + Math.random() * 180, r: 13, taken: false });
 }
 
+function spawnTreatmentRoute() {
+  const routeY = 320 + Math.random() * 120;
+  for (let i = 0; i < 4; i += 1) {
+    pickups.push({
+      x: canvas.width + 100 + i * 115,
+      y: routeY - Math.sin((i / 3) * Math.PI) * 92,
+      r: 13,
+      taken: false,
+    });
+  }
+  tumors.push(makeTumor(canvas.width + 590, routeY - 18));
+  comboMessage = { text: "治療路線出現", life: 72, color: "#8fff29" };
+}
+
 function circleRect(circle, rect) {
   const closeX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.w));
   const closeY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.h));
@@ -461,6 +476,7 @@ function update() {
   if (frame % difficulty.tumorEvery === 0) spawnTumor();
   if (frame % difficulty.pickupEvery === 0) spawnPickup();
   if (frame % difficulty.painEvery === 0) spawnPainSpot();
+  if (frame % 620 === 0) spawnTreatmentRoute();
 
   obstacles.forEach((obstacle) => {
     obstacle.x -= speed;
@@ -477,6 +493,22 @@ function update() {
       } else {
         obstacle.hit = true;
         damagePlayer(obstacle.damage, obstacle.color);
+      }
+    }
+
+    const passedFocus = obstacle.x + obstacle.w < focus.x - focus.radius;
+    if (!obstacle.scored && !obstacle.hit && obstacle.kind !== "bone" && passedFocus) {
+      obstacle.scored = true;
+      const verticalGap = Math.max(
+        obstacle.y - (focus.y + focus.radius),
+        focus.y - focus.radius - (obstacle.y + obstacle.h),
+        0,
+      );
+      if (verticalGap < 58) {
+        coins += 1;
+        energy = Math.min(100, energy + 5);
+        addCombo("精準閃避", "#5afcff");
+        addBurst(focus.x + 12, focus.y, "#5afcff", 16, 5);
       }
     }
   });
