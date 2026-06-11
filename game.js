@@ -71,6 +71,7 @@ let combo = 0;
 let bestCombo = 0;
 let selectedDifficulty = "easy";
 let jumpHeld = false;
+let airBoosts = 0;
 
 const difficultySettings = {
   easy: {
@@ -150,6 +151,7 @@ function resetGame() {
   focus.trail = [];
   controlHeld = false;
   jumpHeld = false;
+  airBoosts = 0;
   combo = 0;
   bestCombo = 0;
   comboMessage = null;
@@ -184,6 +186,7 @@ function startCountdown() {
   focus.trail = [];
   controlHeld = false;
   jumpHeld = false;
+  airBoosts = 0;
   combo = 0;
   bestCombo = 0;
   comboMessage = null;
@@ -295,16 +298,26 @@ function jump() {
   }
 
   jumpHeld = true;
-  tryGroundJump();
+  if (!tryGroundJump()) tryAirBoost();
 }
 
 function tryGroundJump() {
   const isGrounded = focus.y + focus.radius >= groundY - 2 && Math.abs(focus.vy) < 0.5;
-  if (state !== "playing" || !jumpHeld || !isGrounded) return;
+  if (state !== "playing" || !jumpHeld || !isGrounded) return false;
   controlHeld = true;
   focus.vy = -currentDifficulty().jumpStrength;
+  airBoosts = 0;
   energy = Math.max(0, energy - 0.8);
   addBurst(focus.x - 8, focus.y + 12, "#5afcff", 10, 4);
+  return true;
+}
+
+function tryAirBoost() {
+  if (state !== "playing" || airBoosts >= 2 || focus.y <= 125) return;
+  airBoosts += 1;
+  focus.vy = Math.max(-currentDifficulty().jumpStrength, focus.vy - 5.2);
+  energy = Math.max(0, energy - 0.55);
+  addBurst(focus.x - 6, focus.y + 8, "#8fffff", 7, 3);
 }
 
 function releaseControl() {
@@ -431,6 +444,7 @@ function update() {
     focus.y = groundY - focus.radius;
     focus.vy = 0;
     controlHeld = false;
+    airBoosts = 0;
     tryGroundJump();
   }
 
