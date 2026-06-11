@@ -298,27 +298,26 @@ function jump() {
   }
 
   jumpHeld = true;
-  if (!tryGroundJump()) tryAirJump();
+  performJump();
 }
 
-function tryGroundJump() {
+function performJump() {
   const isGrounded = focus.y + focus.radius >= groundY - 2 && Math.abs(focus.vy) < 0.5;
-  if (state !== "playing" || !jumpHeld || !isGrounded) return false;
-  controlHeld = true;
-  focus.vy = -currentDifficulty().jumpStrength;
-  jumpsUsed = 1;
-  energy = Math.max(0, energy - 0.8);
-  addBurst(focus.x - 8, focus.y + 12, "#5afcff", 10, 4);
-  return true;
-}
+  if (state !== "playing" || !jumpHeld) return false;
+  if (isGrounded) jumpsUsed = 0;
+  if (jumpsUsed >= 3 || focus.y <= 112) return false;
 
-function tryAirJump() {
-  if (state !== "playing" || jumpsUsed === 0 || jumpsUsed >= 3 || focus.y <= 112) return false;
   jumpsUsed += 1;
-  focus.vy = -currentDifficulty().jumpStrength * 0.78;
-  energy = Math.max(0, energy - 0.65);
-  addBurst(focus.x - 6, focus.y + 10, "#8fffff", 13, 5);
-  comboMessage = { text: `空中聚焦 ${jumpsUsed}/3`, life: 38, color: "#8fffff" };
+  controlHeld = true;
+  const jumpPower = isGrounded ? 1 : 0.82;
+  focus.vy = -currentDifficulty().jumpStrength * jumpPower;
+  energy = Math.max(0, energy - (isGrounded ? 0.8 : 0.65));
+  addBurst(focus.x - 6, focus.y + 10, isGrounded ? "#5afcff" : "#8fffff", isGrounded ? 10 : 15, 5);
+  comboMessage = {
+    text: isGrounded ? "聚焦起跳 1/3" : `空中聚焦 ${jumpsUsed}/3`,
+    life: 42,
+    color: "#8fffff",
+  };
   return true;
 }
 
@@ -447,7 +446,7 @@ function update() {
     focus.vy = 0;
     controlHeld = false;
     jumpsUsed = 0;
-    tryGroundJump();
+    if (jumpHeld) performJump();
   }
 
   if (focus.y - focus.radius < 78) {
