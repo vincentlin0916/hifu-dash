@@ -71,7 +71,6 @@ let combo = 0;
 let bestCombo = 0;
 let selectedDifficulty = "easy";
 let jumpHeld = false;
-let airBoosts = 0;
 
 const difficultySettings = {
   easy: {
@@ -83,8 +82,8 @@ const difficultySettings = {
     pickupEvery: 165,
     painEvery: 320,
     damageMultiplier: 0.72,
-    jumpStrength: 17.4,
-    gravity: 0.72,
+    jumpStrength: 15.3,
+    gravity: 0.82,
   },
   normal: {
     label: "標準",
@@ -95,8 +94,8 @@ const difficultySettings = {
     pickupEvery: 190,
     painEvery: 360,
     damageMultiplier: 1,
-    jumpStrength: 17.8,
-    gravity: 0.74,
+    jumpStrength: 15.7,
+    gravity: 0.84,
   },
   challenge: {
     label: "挑戰",
@@ -107,8 +106,8 @@ const difficultySettings = {
     pickupEvery: 220,
     painEvery: 400,
     damageMultiplier: 1.22,
-    jumpStrength: 18.2,
-    gravity: 0.76,
+    jumpStrength: 16.1,
+    gravity: 0.86,
   },
 };
 
@@ -151,7 +150,6 @@ function resetGame() {
   focus.trail = [];
   controlHeld = false;
   jumpHeld = false;
-  airBoosts = 0;
   combo = 0;
   bestCombo = 0;
   comboMessage = null;
@@ -186,7 +184,6 @@ function startCountdown() {
   focus.trail = [];
   controlHeld = false;
   jumpHeld = false;
-  airBoosts = 0;
   combo = 0;
   bestCombo = 0;
   comboMessage = null;
@@ -298,7 +295,7 @@ function jump() {
   }
 
   jumpHeld = true;
-  if (!tryGroundJump()) tryAirBoost();
+  tryGroundJump();
 }
 
 function tryGroundJump() {
@@ -306,18 +303,9 @@ function tryGroundJump() {
   if (state !== "playing" || !jumpHeld || !isGrounded) return false;
   controlHeld = true;
   focus.vy = -currentDifficulty().jumpStrength;
-  airBoosts = 0;
   energy = Math.max(0, energy - 0.8);
   addBurst(focus.x - 8, focus.y + 12, "#5afcff", 10, 4);
   return true;
-}
-
-function tryAirBoost() {
-  if (state !== "playing" || airBoosts >= 2 || focus.y <= 125) return;
-  airBoosts += 1;
-  focus.vy = Math.max(-currentDifficulty().jumpStrength, focus.vy - 5.2);
-  energy = Math.max(0, energy - 0.55);
-  addBurst(focus.x - 6, focus.y + 8, "#8fffff", 7, 3);
 }
 
 function releaseControl() {
@@ -444,7 +432,6 @@ function update() {
     focus.y = groundY - focus.radius;
     focus.vy = 0;
     controlHeld = false;
-    airBoosts = 0;
     tryGroundJump();
   }
 
