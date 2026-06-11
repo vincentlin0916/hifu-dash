@@ -71,6 +71,7 @@ let combo = 0;
 let bestCombo = 0;
 let selectedDifficulty = "easy";
 let jumpHeld = false;
+let jumpsUsed = 0;
 
 const difficultySettings = {
   easy: {
@@ -150,6 +151,7 @@ function resetGame() {
   focus.trail = [];
   controlHeld = false;
   jumpHeld = false;
+  jumpsUsed = 0;
   combo = 0;
   bestCombo = 0;
   comboMessage = null;
@@ -184,6 +186,7 @@ function startCountdown() {
   focus.trail = [];
   controlHeld = false;
   jumpHeld = false;
+  jumpsUsed = 0;
   combo = 0;
   bestCombo = 0;
   comboMessage = null;
@@ -295,7 +298,7 @@ function jump() {
   }
 
   jumpHeld = true;
-  tryGroundJump();
+  if (!tryGroundJump()) tryAirJump();
 }
 
 function tryGroundJump() {
@@ -303,8 +306,19 @@ function tryGroundJump() {
   if (state !== "playing" || !jumpHeld || !isGrounded) return false;
   controlHeld = true;
   focus.vy = -currentDifficulty().jumpStrength;
+  jumpsUsed = 1;
   energy = Math.max(0, energy - 0.8);
   addBurst(focus.x - 8, focus.y + 12, "#5afcff", 10, 4);
+  return true;
+}
+
+function tryAirJump() {
+  if (state !== "playing" || jumpsUsed === 0 || jumpsUsed >= 3 || focus.y <= 112) return false;
+  jumpsUsed += 1;
+  focus.vy = -currentDifficulty().jumpStrength * 0.78;
+  energy = Math.max(0, energy - 0.65);
+  addBurst(focus.x - 6, focus.y + 10, "#8fffff", 13, 5);
+  comboMessage = { text: `空中聚焦 ${jumpsUsed}/3`, life: 38, color: "#8fffff" };
   return true;
 }
 
@@ -432,6 +446,7 @@ function update() {
     focus.y = groundY - focus.radius;
     focus.vy = 0;
     controlHeld = false;
+    jumpsUsed = 0;
     tryGroundJump();
   }
 
