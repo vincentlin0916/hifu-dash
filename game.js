@@ -4,6 +4,8 @@ const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const pauseButton = document.querySelector("#pauseButton");
 const overlayPlay = overlay.querySelector(".play-button");
+const difficultyPicker = document.querySelector(".difficulty-picker");
+const difficultyButtons = [...document.querySelectorAll(".difficulty-button")];
 
 const ui = {
   energy: document.querySelector("#energy"),
@@ -43,15 +45,17 @@ const focus = {
 
 let state = "menu";
 let attempt = 1;
-let speed = 4.6;
+let speed = 4.2;
 let frame = 0;
 let launchFrame = 0;
 let countdownFrame = 0;
 let chargeLevel = 0;
 let chargeDirection = 1;
 let isCharging = false;
+let controlHeld = false;
 let ablationMessage = null;
 let painReliefMessage = null;
+let comboMessage = null;
 let energy = 100;
 let safety = 100;
 let painLevel = 10;
@@ -63,6 +67,60 @@ let obstacles = [];
 let tumors = [];
 let pickups = [];
 let particles = [];
+let combo = 0;
+let bestCombo = 0;
+let selectedDifficulty = "easy";
+let jumpHeld = false;
+
+const difficultySettings = {
+  easy: {
+    label: "簡單",
+    startSpeed: 4.2,
+    acceleration: 0.00055,
+    obstacleEvery: 174,
+    tumorEvery: 210,
+    pickupEvery: 165,
+    painEvery: 320,
+    damageMultiplier: 0.72,
+    jumpStrength: 13.4,
+  },
+  normal: {
+    label: "標準",
+    startSpeed: 4.6,
+    acceleration: 0.0009,
+    obstacleEvery: 142,
+    tumorEvery: 230,
+    pickupEvery: 190,
+    painEvery: 360,
+    damageMultiplier: 1,
+    jumpStrength: 13.8,
+  },
+  challenge: {
+    label: "挑戰",
+    startSpeed: 5.15,
+    acceleration: 0.00135,
+    obstacleEvery: 112,
+    tumorEvery: 245,
+    pickupEvery: 220,
+    painEvery: 400,
+    damageMultiplier: 1.22,
+    jumpStrength: 14.2,
+  },
+};
+
+function currentDifficulty() {
+  return difficultySettings[selectedDifficulty];
+}
+
+function selectDifficulty(difficulty) {
+  if (state !== "menu" || !difficultySettings[difficulty]) return;
+  selectedDifficulty = difficulty;
+  difficultyButtons.forEach((button) => {
+    const selected = button.dataset.difficulty === difficulty;
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+}
 
 const obstacleTypes = [
   { kind: "vessel", label: "血管", color: "#ff4b45", w: 190, h: 34, damage: 18, lane: "any" },
@@ -76,7 +134,7 @@ const obstacleTypes = [
 function resetGame() {
   state = "playing";
   frame = 0;
-  speed = 4.6;
+  speed = currentDifficulty().startSpeed;
   energy = Math.round(58 + chargeLevel * 42);
   safety = 100;
   painLevel = 10;
@@ -84,9 +142,14 @@ function resetGame() {
   hits = 0;
   coins = 0;
   distance = 0;
-  focus.y = 430;
+  focus.y = groundY - focus.radius;
   focus.vy = 0;
   focus.trail = [];
+  controlHeld = false;
+  jumpHeld = false;
+  combo = 0;
+  bestCombo = 0;
+  comboMessage = null;
   obstacles = [];
   tumors = [];
   pickups = [];
@@ -116,11 +179,17 @@ function startCountdown() {
   focus.y = 430;
   focus.vy = 0;
   focus.trail = [];
+  controlHeld = false;
+  jumpHeld = false;
+  combo = 0;
+  bestCombo = 0;
+  comboMessage = null;
   obstacles = [];
   tumors = [];
   pickups = [];
   particles = [];
   overlay.className = "overlay hidden";
+  difficultyPicker.classList.add("hidden");
   startButton.textContent = "RETRY";
   ui.attempt.textContent = `ATTEMPT ${attempt}`;
   updateUi();
@@ -222,11 +291,23 @@ function jump() {
     return;
   }
 
-  if (focus.y > 150) {
-    focus.vy = -14.6;
-    energy = Math.max(0, energy - 1.4);
-    addBurst(focus.x - 8, focus.y + 8, "#5afcff", 8, 4);
-  }
+  jumpHeld = true;
+  tryGroundJump();
+}
+
+function tryGroundJump() {
+  const isGrounded = focus.y + focus.radius >= groundY - 2 && Math.abs(focus.vy) < 0.5;
+  if (state !== "playing" || !jumpHeld || !isGrounded) return;
+  controlHeld = true;
+  focus.vy = -currentDifficulty().jumpStrength;
+  energy = Math.max(0, energy - 0.8);
+  addBurst(focus.x - 8, focus.y + 12, "#5afcff", 10, 4);
+}
+
+function releaseControl() {
+  controlHeld = false;
+  jumpHeld = false;
+  releaseUltrasound();
 }
 
 function togglePause() {
@@ -295,10 +376,25 @@ function addBurst(x, y, color, count = 24, force = 7) {
 }
 
 function damagePlayer(amount, color) {
-  safety = Math.max(0, safety - amount);
-  energy = Math.max(0, energy - amount * 0.45);
+  const adjustedAmount = amount * currentDifficulty().damageMultiplier;
+  safety = Math.max(0, safety - adjustedAmount);
+  energy = Math.max(0, energy - adjustedAmount * 0.45);
   focus.vy = -8;
+  combo = 0;
+  comboMessage = { text: "治療連擊中斷", life: 55, color: "#ff8f85" };
   addBurst(focus.x, focus.y, color, 22, 9);
+}
+
+function addCombo(label, color) {
+  combo += 1;
+  bestCombo = Math.max(bestCombo, combo);
+  const bonus = Math.min(8, combo * 0.8);
+  energy = Math.min(100, energy + bonus);
+  comboMessage = {
+    text: combo > 1 ? `${label}  ${combo}x COMBO` : label,
+    life: 72,
+    color,
+  };
 }
 
 function update() {
@@ -320,15 +416,19 @@ function update() {
   if (state !== "playing") return;
 
   frame += 1;
-  speed += 0.0009;
+  const difficulty = currentDifficulty();
+  speed += difficulty.acceleration;
   distance += speed / 14;
-  energy = Math.min(100, energy + 0.04);
+  energy = Math.min(100, energy + 0.055);
+
   focus.vy += 0.68;
   focus.y += focus.vy;
 
   if (focus.y + focus.radius > groundY) {
     focus.y = groundY - focus.radius;
     focus.vy = 0;
+    controlHeld = false;
+    tryGroundJump();
   }
 
   if (focus.y - focus.radius < 78) {
@@ -339,10 +439,10 @@ function update() {
   focus.trail.unshift({ x: focus.x, y: focus.y, life: 1 });
   focus.trail = focus.trail.slice(0, 18).map((dot) => ({ ...dot, life: dot.life - 0.045 }));
 
-  if (frame % 142 === 0) spawnObstacle();
-  if (frame % 230 === 0) spawnTumor();
-  if (frame % 190 === 0) spawnPickup();
-  if (frame % 360 === 0) spawnPainSpot();
+  if (frame % difficulty.obstacleEvery === 0) spawnObstacle();
+  if (frame % difficulty.tumorEvery === 0) spawnTumor();
+  if (frame % difficulty.pickupEvery === 0) spawnPickup();
+  if (frame % difficulty.painEvery === 0) spawnPainSpot();
 
   obstacles.forEach((obstacle) => {
     obstacle.x -= speed;
@@ -370,6 +470,7 @@ function update() {
       tumor.hit = true;
       hits += 1;
       energy = Math.min(100, energy + 13);
+      addCombo("腫瘤消融", "#8fff29");
       ablationMessage = { x: tumor.x, y: tumor.y, life: 86 };
       addBurst(tumor.x, tumor.y, "#8fff29", 42, 11);
     }
@@ -380,6 +481,7 @@ function update() {
     if (!pickup.taken && circleCircle(focus, pickup)) {
       pickup.taken = true;
       coins += 1;
+      addCombo("能量校準", "#ffd84a");
       addBurst(pickup.x, pickup.y, "#ffd84a", 18, 8);
     }
   });
@@ -399,6 +501,10 @@ function update() {
     painReliefMessage.x -= speed;
     painReliefMessage.life -= 1;
     if (painReliefMessage.life <= 0) painReliefMessage = null;
+  }
+  if (comboMessage) {
+    comboMessage.life -= 1;
+    if (comboMessage.life <= 0) comboMessage = null;
   }
 
   obstacles = obstacles.filter((obstacle) => obstacle.x > -260);
@@ -424,6 +530,7 @@ function treatBonePain(bone) {
   painTreatments += 1;
   painLevel = Math.max(0, painLevel - 4);
   energy = Math.min(100, energy + 8);
+  addCombo("骨痛治療", "#ffd84a");
   painReliefMessage = { x: bone.x + bone.w / 2, y: bone.y + bone.h / 2, life: 95 };
   addBurst(bone.x + bone.w / 2, bone.y + bone.h / 2, "#ffd84a", 38, 9);
 }
@@ -1206,6 +1313,27 @@ function drawDecorations() {
   ctx.fillText("不可碰：血管 / 神經 / 器官 / 胸腔 / 腸胃", 32, 112);
   ctx.fillStyle = "rgba(255, 216, 74, 0.96)";
   ctx.fillText(`骨痛 ${painLevel}/10   骨頭變綠 = 治療完成`, 32, 138);
+
+  ctx.textAlign = "right";
+  ctx.font = "1000 22px sans-serif";
+  ctx.fillStyle = combo >= 2 ? "#ffd84a" : "rgba(242, 253, 255, 0.72)";
+  ctx.fillText(`治療連擊 ${combo}x   BEST ${bestCombo}x`, canvas.width - 34, 92);
+  ctx.font = "900 16px sans-serif";
+  ctx.fillStyle = "rgba(214, 253, 255, 0.9)";
+  ctx.fillText(`難度：${currentDifficulty().label}`, canvas.width - 34, 120);
+
+  if (comboMessage) {
+    const alpha = Math.min(1, comboMessage.life / 18);
+    ctx.globalAlpha = alpha;
+    ctx.textAlign = "center";
+    ctx.font = "1000 28px sans-serif";
+    ctx.fillStyle = comboMessage.color;
+    ctx.shadowColor = comboMessage.color;
+    ctx.shadowBlur = 18;
+    ctx.fillText(comboMessage.text, canvas.width / 2, 174);
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+  }
 }
 
 function draw() {
@@ -1247,22 +1375,28 @@ startButton.addEventListener("click", () => {
   attempt = state === "menu" ? 1 : attempt + 1;
   startCountdown();
 });
+difficultyButtons.forEach((button) => {
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    selectDifficulty(button.dataset.difficulty);
+  });
+});
 overlayPlay.addEventListener("click", jump);
 pauseButton.addEventListener("click", togglePause);
 canvas.addEventListener("pointerdown", jump);
-canvas.addEventListener("pointerup", releaseUltrasound);
-canvas.addEventListener("pointercancel", releaseUltrasound);
+canvas.addEventListener("pointerup", releaseControl);
+canvas.addEventListener("pointercancel", releaseControl);
 window.addEventListener("keydown", (event) => {
   if (event.code === "Space" || event.code === "ArrowUp") {
     event.preventDefault();
-    jump();
+    if (!event.repeat) jump();
   }
   if (event.code === "KeyP") togglePause();
 });
 window.addEventListener("keyup", (event) => {
   if (event.code === "Space" || event.code === "ArrowUp") {
     event.preventDefault();
-    releaseUltrasound();
+    releaseControl();
   }
 });
 

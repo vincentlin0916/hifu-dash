@@ -498,6 +498,52 @@ canvas {
   color: var(--muted);
 }
 
+.difficulty-picker {
+  width: min(720px, 92vw);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 18px auto 4px;
+  pointer-events: auto;
+}
+
+.difficulty-picker.hidden {
+  display: none;
+}
+
+.difficulty-button {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 13px 15px;
+  border: 2px solid rgba(90, 252, 255, 0.36);
+  border-radius: 16px;
+  color: #dffeff;
+  background: rgba(2, 26, 35, 0.9);
+  cursor: pointer;
+  box-shadow: inset 0 0 18px rgba(90, 252, 255, 0.06);
+}
+
+.difficulty-button strong {
+  font-size: 1.12rem;
+}
+
+.difficulty-button span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.difficulty-button.selected {
+  border-color: var(--lime);
+  color: #07150c;
+  background: linear-gradient(180deg, #caff65, #55d934);
+  box-shadow: 0 0 22px rgba(143, 255, 41, 0.55);
+}
+
+.difficulty-button.selected span {
+  color: #17451c;
+}
+
 .use-cases {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -687,5 +733,23 @@ canvas {
     margin: 8px auto;
     padding: 10px 22px;
     font-size: 1.2rem;
+  }
+
+  .difficulty-picker {
+    width: min(620px, 86vw);
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .difficulty-button {
+    padding: 8px 10px;
+  }
+
+  .difficulty-button strong {
+    font-size: 0.95rem;
+  }
+
+  .difficulty-button span {
+    font-size: 0.7rem;
   }
 }
