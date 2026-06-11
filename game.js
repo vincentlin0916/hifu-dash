@@ -71,7 +71,7 @@ let combo = 0;
 let bestCombo = 0;
 let selectedDifficulty = "easy";
 let jumpHeld = false;
-let jumpsUsed = 0;
+let airPulseCount = 0;
 
 const difficultySettings = {
   easy: {
@@ -151,7 +151,7 @@ function resetGame() {
   focus.trail = [];
   controlHeld = false;
   jumpHeld = false;
-  jumpsUsed = 0;
+  airPulseCount = 0;
   combo = 0;
   bestCombo = 0;
   comboMessage = null;
@@ -186,7 +186,7 @@ function startCountdown() {
   focus.trail = [];
   controlHeld = false;
   jumpHeld = false;
-  jumpsUsed = 0;
+  airPulseCount = 0;
   combo = 0;
   bestCombo = 0;
   comboMessage = null;
@@ -304,17 +304,17 @@ function jump() {
 function performJump() {
   const isGrounded = focus.y + focus.radius >= groundY - 2 && Math.abs(focus.vy) < 0.5;
   if (state !== "playing" || !jumpHeld) return false;
-  if (isGrounded) jumpsUsed = 0;
-  if (jumpsUsed >= 3 || focus.y <= 112) return false;
+  if (isGrounded) airPulseCount = 0;
 
-  jumpsUsed += 1;
+  airPulseCount += 1;
   controlHeld = true;
-  const jumpPower = isGrounded ? 1 : 0.82;
-  focus.vy = -currentDifficulty().jumpStrength * jumpPower;
-  energy = Math.max(0, energy - (isGrounded ? 0.8 : 0.65));
+  const jumpPower = isGrounded ? 1 : 0.42;
+  const impulse = currentDifficulty().jumpStrength * jumpPower;
+  focus.vy = isGrounded ? -impulse : Math.max(-9.4, focus.vy - impulse);
+  energy = Math.max(0, energy - (isGrounded ? 0.8 : 0.3));
   addBurst(focus.x - 6, focus.y + 10, isGrounded ? "#5afcff" : "#8fffff", isGrounded ? 10 : 15, 5);
   comboMessage = {
-    text: isGrounded ? "聚焦起跳 1/3" : `空中聚焦 ${jumpsUsed}/3`,
+    text: isGrounded ? "聚焦起跳" : `空中推進 ${airPulseCount}`,
     life: 42,
     color: "#8fffff",
   };
@@ -445,7 +445,7 @@ function update() {
     focus.y = groundY - focus.radius;
     focus.vy = 0;
     controlHeld = false;
-    jumpsUsed = 0;
+    airPulseCount = 0;
     if (jumpHeld) performJump();
   }
 
