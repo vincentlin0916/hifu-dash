@@ -82,7 +82,8 @@ const difficultySettings = {
     pickupEvery: 165,
     painEvery: 320,
     damageMultiplier: 0.72,
-    jumpStrength: 13.4,
+    jumpStrength: 17.4,
+    gravity: 0.72,
   },
   normal: {
     label: "標準",
@@ -93,7 +94,8 @@ const difficultySettings = {
     pickupEvery: 190,
     painEvery: 360,
     damageMultiplier: 1,
-    jumpStrength: 13.8,
+    jumpStrength: 17.8,
+    gravity: 0.74,
   },
   challenge: {
     label: "挑戰",
@@ -104,7 +106,8 @@ const difficultySettings = {
     pickupEvery: 220,
     painEvery: 400,
     damageMultiplier: 1.22,
-    jumpStrength: 14.2,
+    jumpStrength: 18.2,
+    gravity: 0.76,
   },
 };
 
@@ -421,7 +424,7 @@ function update() {
   distance += speed / 14;
   energy = Math.min(100, energy + 0.055);
 
-  focus.vy += 0.68;
+  focus.vy += difficulty.gravity;
   focus.y += focus.vy;
 
   if (focus.y + focus.radius > groundY) {
