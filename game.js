@@ -82,8 +82,8 @@ const difficultySettings = {
     pickupEvery: 165,
     painEvery: 320,
     damageMultiplier: 0.72,
-    jumpStrength: 15.3,
-    gravity: 0.82,
+    jumpStrength: 20.4,
+    gravity: 0.86,
   },
   normal: {
     label: "標準",
@@ -94,8 +94,8 @@ const difficultySettings = {
     pickupEvery: 190,
     painEvery: 360,
     damageMultiplier: 1,
-    jumpStrength: 15.7,
-    gravity: 0.84,
+    jumpStrength: 20.8,
+    gravity: 0.88,
   },
   challenge: {
     label: "挑戰",
@@ -106,8 +106,8 @@ const difficultySettings = {
     pickupEvery: 220,
     painEvery: 400,
     damageMultiplier: 1.22,
-    jumpStrength: 16.1,
-    gravity: 0.86,
+    jumpStrength: 21.2,
+    gravity: 0.9,
   },
 };
 
@@ -229,7 +229,7 @@ function seedOpeningPattern() {
   tumors.push(makeTumor(1460, 456));
   tumors.push(makeTumor(3280, 330));
   pickups.push({ x: 620, y: 350, r: 14, taken: false });
-  pickups.push({ x: 2180, y: 210, r: 14, taken: false });
+  pickups.push({ x: 2180, y: 330, r: 14, taken: false });
 }
 
 function loadSprites(paths) {
@@ -343,7 +343,7 @@ function spawnObstacle() {
 }
 
 function spawnTumor() {
-  tumors.push(makeTumor(canvas.width + 130, 255 + Math.random() * 245));
+  tumors.push(makeTumor(canvas.width + 130, 330 + Math.random() * 165));
 }
 
 function spawnPainSpot() {
@@ -352,7 +352,7 @@ function spawnPainSpot() {
 }
 
 function spawnPickup() {
-  pickups.push({ x: canvas.width + 90, y: 210 + Math.random() * 280, r: 13, taken: false });
+  pickups.push({ x: canvas.width + 90, y: 315 + Math.random() * 180, r: 13, taken: false });
 }
 
 function circleRect(circle, rect) {
