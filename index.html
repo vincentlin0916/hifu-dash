@@ -59,6 +59,13 @@
             </ol>
           </section>
 
+          <section class="mission-card">
+            <h2>本次治療任務</h2>
+            <div><span>腫瘤消融</span><strong id="missionTumors">0 / 3</strong></div>
+            <div><span>骨痛治療</span><strong id="missionBones">0 / 2</strong></div>
+            <div><span>組織安全率</span><strong id="missionSafety">100% / 70%</strong></div>
+          </section>
+
           <div class="asset-strip" aria-label="HIFU Dash art assets">
             <figure class="asset-card safe"><img src="assets/focus-orb.svg" alt="超音波焦點" /><figcaption>超音波焦點</figcaption></figure>
             <figure class="asset-card safe"><img src="assets/transducer.svg" alt="超音波探頭" /><figcaption>超音波探頭</figcaption></figure>
@@ -92,6 +99,7 @@
           <div id="overlay" class="overlay menu">
             <h2>HIFU DASH</h2>
             <p>先發射超音波，形成藍色焦點；接著命中腫瘤讓它消失，碰到骨頭完成疼痛治療。</p>
+            <div id="treatmentReport" class="treatment-report hidden" aria-live="polite"></div>
             <div class="difficulty-picker" role="group" aria-label="選擇遊戲難度">
               <button class="difficulty-button selected" type="button" data-difficulty="easy">
                 <strong>簡單</strong>

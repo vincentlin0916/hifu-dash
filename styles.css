@@ -498,6 +498,75 @@ canvas {
   color: var(--muted);
 }
 
+.mission-card {
+  margin-top: 16px;
+  padding: 18px;
+  border: 1px solid rgba(143, 255, 41, 0.35);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(143, 255, 41, 0.1), rgba(90, 252, 255, 0.06));
+}
+
+.mission-card h2 {
+  margin: 0 0 12px;
+  color: var(--lime);
+}
+
+.mission-card div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #dffeff;
+}
+
+.mission-card strong {
+  color: var(--gold);
+}
+
+.treatment-report {
+  width: min(760px, 92vw);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 18px auto 4px;
+}
+
+.treatment-report.hidden {
+  display: none;
+}
+
+.report-metric {
+  padding: 14px 10px;
+  border: 1px solid rgba(90, 252, 255, 0.38);
+  border-radius: 14px;
+  background: rgba(2, 25, 34, 0.9);
+}
+
+.report-metric span,
+.report-metric strong {
+  display: block;
+}
+
+.report-metric span {
+  color: #9edee5;
+  font-size: 0.76rem;
+}
+
+.report-metric strong {
+  margin-top: 6px;
+  color: white;
+  font-size: 1.25rem;
+}
+
+.report-metric.pass strong {
+  color: var(--lime);
+}
+
+.report-metric.fail strong {
+  color: #ff8f85;
+}
+
 .difficulty-picker {
   width: min(720px, 92vw);
   display: grid;
@@ -739,6 +808,15 @@ canvas {
     width: min(620px, 86vw);
     gap: 8px;
     margin-top: 8px;
+  }
+
+  .treatment-report {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 8px;
+  }
+
+  .report-metric {
+    padding: 8px;
   }
 
   .difficulty-button {
