@@ -36,7 +36,7 @@ const sprites = loadSprites({
   poster: "assets/level-poster.svg",
 });
 
-const levelDurationFrames = 3600;
+const levelDurationFrames = 2400;
 const missionTargets = { tumors: 3, bones: 2, safety: 70 };
 const groundY = 602;
 const focus = {
@@ -81,25 +81,25 @@ let propulsionCooldown = 0;
 let audioContext = null;
 
 const fixedLevel = [
-  { frame: 150, type: "pickup", y: 478 },
-  { frame: 300, type: "obstacle", kind: "vessel", y: 520, angle: -0.08 },
-  { frame: 510, type: "pickupRoute", y: 430 },
-  { frame: 690, type: "tumor", y: 430 },
-  { frame: 860, type: "obstacle", kind: "nerve", y: 150 },
-  { frame: 1040, type: "obstacle", kind: "organ", y: 500 },
-  { frame: 1210, type: "bone", y: 520, angle: 0.02 },
-  { frame: 1390, type: "obstacle", kind: "chest", y: 250 },
-  { frame: 1580, type: "pickupRoute", y: 390 },
-  { frame: 1770, type: "tumor", y: 365 },
-  { frame: 1950, type: "obstacle", kind: "gut", y: 485, angle: -0.04 },
-  { frame: 2140, type: "obstacle", kind: "vessel", y: 305, angle: 0.12 },
-  { frame: 2340, type: "bone", y: 505, angle: -0.02 },
-  { frame: 2520, type: "obstacle", kind: "nerve", y: 170 },
-  { frame: 2700, type: "pickupRoute", y: 420 },
-  { frame: 2900, type: "tumor", y: 410 },
-  { frame: 3090, type: "obstacle", kind: "organ", y: 490 },
-  { frame: 3260, type: "obstacle", kind: "chest", y: 280 },
-  { frame: 3410, type: "pickup", y: 400 },
+  { frame: 100, type: "pickup", y: 478 },
+  { frame: 200, type: "obstacle", kind: "vessel", y: 520, angle: -0.08 },
+  { frame: 340, type: "pickupRoute", y: 430 },
+  { frame: 460, type: "tumor", y: 430 },
+  { frame: 573, type: "obstacle", kind: "nerve", y: 150 },
+  { frame: 693, type: "obstacle", kind: "organ", y: 500 },
+  { frame: 807, type: "bone", y: 520, angle: 0.02 },
+  { frame: 927, type: "obstacle", kind: "chest", y: 250 },
+  { frame: 1053, type: "pickupRoute", y: 390 },
+  { frame: 1180, type: "tumor", y: 365 },
+  { frame: 1300, type: "obstacle", kind: "gut", y: 485, angle: -0.04 },
+  { frame: 1427, type: "obstacle", kind: "vessel", y: 305, angle: 0.12 },
+  { frame: 1560, type: "bone", y: 505, angle: -0.02 },
+  { frame: 1680, type: "obstacle", kind: "nerve", y: 170 },
+  { frame: 1800, type: "pickupRoute", y: 420 },
+  { frame: 1933, type: "tumor", y: 410 },
+  { frame: 2060, type: "obstacle", kind: "organ", y: 490 },
+  { frame: 2173, type: "obstacle", kind: "chest", y: 280 },
+  { frame: 2273, type: "pickup", y: 400 },
 ];
 
 const difficultySettings = {
